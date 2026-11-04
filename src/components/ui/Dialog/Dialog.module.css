@@ -1,0 +1,36 @@
+.dialog {
+  width: min(100% - 2 * var(--space), 480px);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-lg);
+  color: var(--fg);
+  background: var(--surface);
+  box-shadow: var(--shadow-dialog);
+}
+
+.dialog[open] {
+  animation: pop 0.22s ease both;
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+.content {
+  padding: calc(var(--space) * 1.5);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space);
+  margin-bottom: var(--space);
+}
+
+.title {
+  margin: 0;
+}

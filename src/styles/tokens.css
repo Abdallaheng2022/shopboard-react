@@ -1,0 +1,57 @@
+/* tokens.css: the design tokens (colors, radius, spacing, fonts). Components use var(--token) only.
+   --accent drives every action; --second only decorates (the cart badge, gradients). */
+:root {
+  --bg: #eef0f3;
+  --surface: #ffffff;
+  --surface-2: #e2e6ee;
+  --fg: #0e1116;
+  --fg-2: #36393e;
+  --muted: #63666a;
+  --border: #cfd1d4;
+  --accent: #3b5bfd;
+  --accent-on: #ffffff;
+  --accent-soft: #d5dbf4;
+  --accent-ring: rgb(59 91 253 / 20%);
+  --second: #ff7a59;
+  --second-on: #0e1116;
+  --link: #294cfd;
+  --danger: #d92d20;
+  --success: #16a34a;
+  --header-bg: rgb(238 240 243 / 82%);
+  --shadow-lift: 0 18px 40px -18px rgb(14 17 22 / 35%);
+  --shadow-panel: 0 8px 24px -16px rgb(14 17 22 / 35%);
+  --shadow-dialog: 0 30px 80px -20px rgb(0 0 0 / 45%);
+  --backdrop: rgb(14 17 22 / 55%);
+
+  --radius-sm: 10px;
+  --radius-md: 18px;
+  --radius-lg: 28px;
+
+  --space: 16px;
+  --page-max: 1240px;
+  --page-pad: clamp(16px, 4vw, 40px);
+  --header-height: 64px;
+  --tap: 44px;
+
+  --font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1014;
+    --surface: #18191e;
+    --surface-2: #212229;
+    --fg: #ebebf0;
+    --fg-2: #c8c9d0;
+    --muted: #9a9ca7;
+    --border: #31323a;
+    --accent: #4d6afd;
+    --accent-on: #0b0b0d;
+    --accent-soft: #1b2243;
+    --link: #5f79fd;
+    --header-bg: rgb(15 16 20 / 82%);
+    color-scheme: dark;
+  }
+}
