@@ -1,0 +1,16 @@
+.status {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  margin-bottom: var(--space);
+  padding: 20px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  text-align: center;
+  color: var(--muted);
+  background: var(--surface);
+}
+
+.message {
+  margin: 0;
+}
