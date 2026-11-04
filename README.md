@@ -71,5 +71,7 @@ src/
 - Every request goes through `createApiClient("/<subpath>")` in `src/shared/api/client.ts`,
   so the API's base URL lives in one place.
 
-The full rules (components, layouts, API, state, tests) are in [CLAUDE.md](CLAUDE.md). The
+The full rules (components, layouts, API, state, tests) are in [CLAUDE.md](CLAUDE.md). Two
+Claude Code skills from Vercel (React best practices and composition patterns) are in
+`.claude/skills/`. The
 design tokens are in [src/styles/tokens.css](src/styles/tokens.css).

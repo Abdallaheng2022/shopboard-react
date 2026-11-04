@@ -307,6 +307,18 @@ the top of its `<feature>.api.ts`.
 The pre-commit hook runs only `npx lint-staged` (oxlint and Prettier on staged files), so a
 commit with a lint warning is blocked.
 
+## Skills
+
+`.claude/skills/` holds two skills from
+[vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) (MIT), copied
+unchanged:
+
+- `vercel-react-best-practices`: performance rules (re-renders, effects, data fetching).
+- `vercel-composition-patterns`: component API rules (composition over boolean props,
+  context interfaces, React 19 APIs).
+
+Use them when writing or reviewing components. The Next.js and server rules in
+`vercel-react-best-practices` don't apply here: this is a client-only Vite app.
 
 ## Before you finish
 
