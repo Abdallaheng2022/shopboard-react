@@ -2,7 +2,8 @@
 
 A small online shop built with React, TypeScript and Vite. Users can browse products, add
 them to a cart, change quantities and see the cart total. It is the React version of the
-vanilla TypeScript ShopBoard, with the same features and rules.
+vanilla TypeScript ShopBoard: the types, API, logic and cart-state files are reused
+unchanged, and React components replace the old DOM code.
 
 ## Features
 
@@ -23,7 +24,7 @@ vanilla TypeScript ShopBoard, with the same features and rules.
 
 - [Vite](https://vite.dev/), [React 19](https://react.dev/), TypeScript with `"strict": true`
 - [React Router](https://reactrouter.com/) for pages
-- React Context + `useReducer` for shared state, custom hooks for data loading
+- React Context for shared state; `useSyncExternalStore` connects the reused cart state to React
 - CSS Modules and design tokens (CSS custom properties)
 - oxlint, Prettier, husky and lint-staged
 - Vitest and React Testing Library
@@ -58,7 +59,7 @@ src/
 ├── app/                # Router, providers, app-wide notices
 ├── layouts/            # MainLayout: header, page, footer
 ├── pages/              # One component per route
-├── features/
+├── modules/
 │   ├── products/       # Loading, filtering and showing products
 │   ├── cart/           # Cart state, storage and components
 │   └── register/       # Sign-up dialog
@@ -67,9 +68,10 @@ src/
 └── styles/             # Design tokens and global styles
 ```
 
-- Each feature has an `index.ts`; other code imports a feature only through it.
-- Every request goes through `createApiClient("/<subpath>")` in `src/shared/api/client.ts`,
-  so the API's base URL lives in one place.
+- Each module has an `index.ts`; other code imports a module only through it.
+- Every request goes through `getJson` in `src/shared/api/client.ts`.
+- The reused vanilla files (`*.types.ts`, `*.api.ts`, `*.logic.ts`, `cart.state.ts`) are never
+  edited in this repo.
 
 The full rules (components, layouts, API, state, tests) are in [CLAUDE.md](CLAUDE.md). Two
 Claude Code skills from Vercel (React best practices and composition patterns) are in
