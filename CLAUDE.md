@@ -299,12 +299,14 @@ the top of its `<feature>.api.ts`.
 
 - `npm run dev`: start the dev server
 - `npm run typecheck`: `tsc -b`
-- `npm run lint`: `oxlint`
+- `npm run lint`: `oxlint --deny-warnings` (a warning fails the run, like an error)
 - `npm run format`: `prettier --write .`
 - `npm test`: `vitest run` (`npm run test:watch` while working)
 - `npm run build`: build for production
 
-The pre-commit hook runs only `npx lint-staged` (oxlint and Prettier on staged files).
+The pre-commit hook runs only `npx lint-staged` (oxlint and Prettier on staged files), so a
+commit with a lint warning is blocked.
+
 
 ## Before you finish
 

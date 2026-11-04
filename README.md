@@ -44,7 +44,7 @@ npm run dev
 | `npm run dev`          | Start the development server              |
 | `npm run build`        | Build the production version into `dist/` |
 | `npm run typecheck`    | Check types with the TypeScript compiler  |
-| `npm run lint`         | Run oxlint                                |
+| `npm run lint`         | Run oxlint; any warning fails             |
 | `npm test`             | Run the tests once                        |
 | `npm run test:watch`   | Run the tests on every change             |
 | `npm run format`       | Format all files with Prettier            |
