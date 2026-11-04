@@ -1,15 +1,15 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import type { CartLineData } from "../cart.types";
+import type { CartEntry } from "../cart.context";
 import { CartLine } from "./CartLine";
 
-const line: CartLineData = {
+const line: CartEntry = {
   item: { productId: 1, quantity: 2 },
   product: { id: 1, name: "Canvas Tote", category: "Bags", price: 89, inStock: true },
 };
 
-function renderLine(data: CartLineData = line) {
+function renderLine(data: CartEntry = line) {
   const handlers = { onIncrease: vi.fn(), onDecrease: vi.fn(), onRemove: vi.fn() };
   render(
     <ul>

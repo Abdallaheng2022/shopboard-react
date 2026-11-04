@@ -16,11 +16,6 @@ export class ApiError extends Error {
   }
 }
 
-// True when a request was cancelled on purpose (its AbortSignal fired). Never shown to the user.
-export function isAbortError(error: unknown): boolean {
-  return error instanceof DOMException && error.name === "AbortError";
-}
-
 // HTTP status codes that get their own message.
 const STATUS_NOT_FOUND = 404;
 const STATUS_TOO_MANY_REQUESTS = 429;
@@ -28,7 +23,7 @@ const STATUS_SERVER_ERROR = 500;
 
 // Turns an HTTP status into a message the user can understand.
 function getHttpMessage(status: number | undefined): string {
-  if (status === STATUS_NOT_FOUND) return "We couldn't find what you asked for (error 404).";
+  if (status === STATUS_NOT_FOUND) return "We couldn't find the products (error 404).";
   if (status === STATUS_TOO_MANY_REQUESTS) {
     return "Too many requests. Please wait a moment and try again.";
   }

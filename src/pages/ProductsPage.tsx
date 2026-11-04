@@ -1,13 +1,13 @@
 // ProductsPage.tsx: "/products". Filters in a sidebar, and the products that match.
 import { useToast } from "@/components/ui/Toast/useToast";
-import { useCart } from "@/features/cart";
+import { useCart } from "@/modules/cart";
 import {
   ProductFilters,
   ProductResults,
   useProductFilters,
   useProducts,
   type Product,
-} from "@/features/products";
+} from "@/modules/products";
 import styles from "./Page.module.css";
 
 export function ProductsPage() {

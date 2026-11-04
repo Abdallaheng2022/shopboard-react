@@ -1,10 +1,10 @@
 // CartList.tsx: every cart line, one under the other.
-import type { CartLineData } from "../cart.types";
+import type { CartEntry } from "../cart.context";
 import { CartLine } from "./CartLine";
 import styles from "./CartList.module.css";
 
 interface CartListProps {
-  lines: readonly CartLineData[];
+  lines: readonly CartEntry[];
   onIncrease: (productId: number) => void;
   onDecrease: (productId: number) => void;
   onRemove: (productId: number) => void;

@@ -1,4 +1,4 @@
-// format.ts: turns numbers into text for the page.
+// format.ts: turns numbers into text for the page. Used by products.ui.ts and cart.ui.ts.
 
 // Shows prices as US dollars without cents, like "$89".
 const priceFormatter = new Intl.NumberFormat("en-US", {

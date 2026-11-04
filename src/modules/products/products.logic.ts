@@ -1,7 +1,7 @@
-// products.logic.ts: search, filter and sort. No React, no DOM and no fetch: data in, data out.
+// products.logic.ts: search, filter and sort. No DOM and no fetch here: data in, data out.
 import type { Filters, Product, SortOrder } from "./products.types";
 
-// The value of the "All categories" option in ProductFilters.tsx.
+// The value of the "All categories" option of #category in index.html.
 export const ALL_CATEGORIES = "all";
 
 // Checks that a string from the sort <select> is one of the allowed sort orders.

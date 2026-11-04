@@ -1,11 +1,11 @@
 // CartLine.tsx: one cart line: name, category, price × quantity, then − quantity + and Remove.
 import { Button } from "@/components/ui/Button/Button";
-import { formatPrice } from "@/shared/format";
-import type { CartLineData } from "../cart.types";
+import { formatPrice } from "@/shared/ui/format";
+import type { CartEntry } from "../cart.context";
 import styles from "./CartLine.module.css";
 
 interface CartLineProps {
-  line: CartLineData;
+  line: CartEntry;
   onIncrease: (productId: number) => void;
   onDecrease: (productId: number) => void;
   onRemove: (productId: number) => void;

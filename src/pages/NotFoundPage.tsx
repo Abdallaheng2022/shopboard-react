@@ -1,5 +1,5 @@
 // NotFoundPage.tsx: any address that has no page.
-import { ButtonLink } from "@/components/ui/Button/Button";
+import { ButtonLink } from "@/components/ui/Button/ButtonLink";
 import styles from "./Page.module.css";
 
 export function NotFoundPage() {

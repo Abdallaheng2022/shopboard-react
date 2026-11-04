@@ -1,6 +1,6 @@
 // ProductCard.tsx: one product: name, category, price and the "Add to cart" button.
 import { Button } from "@/components/ui/Button/Button";
-import { formatPrice } from "@/shared/format";
+import { formatPrice } from "@/shared/ui/format";
 import type { Product } from "../products.types";
 import styles from "./ProductCard.module.css";
 

@@ -1,6 +1,6 @@
 // CartSummary.tsx: the cart total and the "Clear cart" button.
 import { Button } from "@/components/ui/Button/Button";
-import { formatPrice } from "@/shared/format";
+import { formatPrice } from "@/shared/ui/format";
 import styles from "./CartSummary.module.css";
 
 interface CartSummaryProps {

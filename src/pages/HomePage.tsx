@@ -1,5 +1,5 @@
 // HomePage.tsx: "/". The hero with a link to the shop.
-import { ButtonLink } from "@/components/ui/Button/Button";
+import { ButtonLink } from "@/components/ui/Button/ButtonLink";
 import styles from "./Page.module.css";
 
 export function HomePage() {

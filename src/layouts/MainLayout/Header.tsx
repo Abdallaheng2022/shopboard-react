@@ -2,8 +2,8 @@
 import { useState } from "react";
 import { Link, NavLink } from "react-router";
 import { Button } from "@/components/ui/Button/Button";
-import { CartBadge, useCart } from "@/features/cart";
-import { RegisterDialog } from "@/features/register";
+import { CartBadge, useCart } from "@/modules/cart";
+import { RegisterDialog } from "@/modules/register";
 import styles from "./MainLayout.module.css";
 
 function getNavLinkClass({ isActive }: { isActive: boolean }): string {

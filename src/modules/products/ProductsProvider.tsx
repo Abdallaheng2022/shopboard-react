@@ -1,6 +1,6 @@
 // ProductsProvider.tsx: loads the products once and shares them with every page.
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
-import { getErrorMessage, isAbortError } from "@/shared/api/errors";
+import { getErrorMessage } from "@/shared/api/errors";
 import { useOnReconnect } from "@/shared/hooks/useOnReconnect";
 import type { LoadState } from "@/shared/loadState";
 import { fetchProducts } from "./products.api";
@@ -22,18 +22,23 @@ export function ProductsProvider({ children }: ProductsProviderProps) {
   // The state starts as "loading", and reload() sets it back to "loading" before a new attempt,
   // so the effect itself only starts the request.
   useEffect(() => {
-    const controller = new AbortController();
+    // Set to true when this attempt is replaced or the provider unmounts, so a late answer
+    // from an old request never overwrites the state. StrictMode runs this effect twice in dev.
+    let ignore = false;
 
-    fetchProducts(controller.signal)
-      .then((data) => setState({ status: "success", data }))
+    fetchProducts()
+      .then((data) => {
+        if (!ignore) setState({ status: "success", data });
+      })
       .catch((error: unknown) => {
-        // Cancelled because the effect ran again or the provider unmounted: nothing to show.
-        if (isAbortError(error)) return;
+        if (ignore) return;
         console.error(error);
         setState({ status: "error", message: getErrorMessage(error) });
       });
 
-    return () => controller.abort();
+    return () => {
+      ignore = true;
+    };
   }, [attempt]);
 
   const reload = useCallback(() => {

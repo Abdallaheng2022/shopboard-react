@@ -1,9 +1,10 @@
 // CartPage.tsx: "/cart". Every line with its quantity, the total, and "Clear cart".
 import type { ReactNode } from "react";
-import { Button, ButtonLink } from "@/components/ui/Button/Button";
+import { Button } from "@/components/ui/Button/Button";
+import { ButtonLink } from "@/components/ui/Button/ButtonLink";
 import { useToast } from "@/components/ui/Toast/useToast";
-import { CartList, CartSummary, useCart } from "@/features/cart";
-import { useProducts } from "@/features/products";
+import { CartList, CartSummary, useCart } from "@/modules/cart";
+import { useProducts } from "@/modules/products";
 import styles from "./Page.module.css";
 
 export function CartPage() {

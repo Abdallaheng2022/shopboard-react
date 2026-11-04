@@ -9,12 +9,12 @@ export interface Product {
   readonly inStock: boolean;
 }
 
-// The three ways the list can be sorted. Must match the <option> values in ProductFilters.tsx.
+// The three ways the list can be sorted. Must match the <option> values of #sort in index.html.
 export type SortOrder = "default" | "price-asc" | "price-desc";
 
 // Everything the user picked in the controls above the product grid.
 export interface Filters {
-  readonly query: string;
-  readonly category: string;
-  readonly sort: SortOrder;
+  query: string;
+  category: string;
+  sort: SortOrder;
 }

@@ -3,7 +3,8 @@
 import { SkeletonCard } from "@/components/ui/Skeleton/SkeletonCard";
 import type { LoadState } from "@/shared/loadState";
 import type { Product } from "../products.types";
-import { GridFrame, ProductGrid } from "./ProductGrid";
+import { GridFrame } from "./GridFrame";
+import { ProductGrid } from "./ProductGrid";
 import { ProductsStatus } from "./ProductsStatus";
 
 // One id per placeholder card shown while the products load. Fixed ids, so no list uses the index as key.

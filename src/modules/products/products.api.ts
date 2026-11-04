@@ -1,12 +1,10 @@
 // products.api.ts: gets the products from the server and turns them into our Product shape.
-// Endpoints used by this feature (relative to API_BASE_URL in shared/api/client.ts):
-//   GET /products → { items: ApiProduct[], total: number }, prices in cents
-import { createApiClient } from "@/shared/api/client";
-import { ApiError } from "@/shared/api/errors";
+import { getJson } from "../../shared/api/client";
+import { ApiError } from "../../shared/api/errors";
 import type { Product } from "./products.types";
 
-// The products feature's part of the API. Every request below is under /products.
-const productsApi = createApiClient("/products");
+// Where the products live.
+const PRODUCTS_URL = "https://shopboard-api.vercel.app/api/products";
 
 // The API sends prices in cents. 8900 cents = $89.
 const CENTS_PER_DOLLAR = 100;
@@ -21,7 +19,7 @@ interface ApiProduct {
 }
 
 // Checks that one value from the server really is an API product.
-export function isApiProduct(value: unknown): value is ApiProduct {
+function isApiProduct(value: unknown): value is ApiProduct {
   return (
     typeof value === "object" &&
     value !== null &&
@@ -49,18 +47,17 @@ function toProduct(apiProduct: ApiProduct): Product {
   };
 }
 
-// Checks the whole response: { items: [...] }. Invalid products are skipped;
-// if every product is invalid, or there is no items list, it throws an invalid-response ApiError.
-export function parseProducts(data: unknown): readonly Product[] {
-  if (
-    typeof data !== "object" ||
-    data === null ||
-    !("items" in data) ||
-    !Array.isArray(data.items)
-  ) {
-    throw new ApiError("invalid-response", "Products response has no items list");
+// The API wraps the list: { items: [...], total: 12 }. This takes the list out.
+function getItems(data: unknown): unknown[] {
+  if (typeof data === "object" && data !== null && "items" in data && Array.isArray(data.items)) {
+    return data.items;
   }
-  const items: unknown[] = data.items;
+  throw new ApiError("invalid-response", "Products response has no items list");
+}
+
+// Downloads the products. Invalid products are skipped; if every product is invalid, it throws.
+export async function fetchProducts(): Promise<readonly Product[]> {
+  const items = getItems(await getJson(PRODUCTS_URL));
   const valid = items.filter(isApiProduct);
   if (items.length > 0 && valid.length === 0) {
     throw new ApiError("invalid-response", "No item in the products response is a valid product");
@@ -69,9 +66,4 @@ export function parseProducts(data: unknown): readonly Product[] {
     console.warn(`Skipped ${items.length - valid.length} invalid products from the API`);
   }
   return valid.map(toProduct);
-}
-
-// Downloads the products. `signal` cancels the request when the caller no longer needs it.
-export async function fetchProducts(signal?: AbortSignal): Promise<readonly Product[]> {
-  return parseProducts(await productsApi.get("", { signal }));
 }
