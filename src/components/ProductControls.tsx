@@ -12,7 +12,7 @@ interface ProductControlsProps {
 
 export function ProductControls({ filters, categories, disabled, onChange }: ProductControlsProps) {
   return (
-    <div className="controls">
+    <div className="filters">
       <div className="field">
         <label htmlFor="search">Search</label>
         <input

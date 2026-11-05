@@ -1,22 +1,42 @@
-/* style.css: all the styles. Mobile first: bigger screens only add with min-width queries. */
-
+/* style.css: all the styles. Design tokens first, then base styles, then one block per component. */
+/* tokens.css: the design tokens (colors, radius, spacing, fonts). Components use var(--token) only.
+   --accent drives every action; --second only decorates (the cart badge, gradients). */
 :root {
   --bg: #eef0f3;
   --surface: #ffffff;
   --surface-2: #e2e6ee;
   --fg: #0e1116;
+  --fg-2: #36393e;
   --muted: #63666a;
   --border: #cfd1d4;
   --accent: #3b5bfd;
   --accent-on: #ffffff;
   --accent-soft: #d5dbf4;
+  --accent-ring: rgb(59 91 253 / 20%);
   --second: #ff7a59;
+  --second-on: #0e1116;
+  --link: #294cfd;
   --danger: #d92d20;
-  --radius: 18px;
+  --success: #16a34a;
+  --header-bg: rgb(238 240 243 / 82%);
+  --shadow-lift: 0 18px 40px -18px rgb(14 17 22 / 35%);
+  --shadow-panel: 0 8px 24px -16px rgb(14 17 22 / 35%);
+  --shadow-dialog: 0 30px 80px -20px rgb(0 0 0 / 45%);
+  --backdrop: rgb(14 17 22 / 55%);
+
+  --radius-sm: 10px;
+  --radius-md: 18px;
   --radius-lg: 28px;
+
   --space: 16px;
+  --page-max: 1240px;
+  --page-pad: clamp(16px, 4vw, 40px);
+  --header-height: 64px;
+  --tap: 44px;
+
   --font-display: "Bricolage Grotesque", system-ui, sans-serif;
   --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -25,14 +45,19 @@
     --surface: #18191e;
     --surface-2: #212229;
     --fg: #ebebf0;
+    --fg-2: #c8c9d0;
     --muted: #9a9ca7;
     --border: #31323a;
     --accent: #4d6afd;
     --accent-on: #0b0b0d;
     --accent-soft: #1b2243;
+    --link: #5f79fd;
+    --header-bg: rgb(15 16 20 / 82%);
     color-scheme: dark;
   }
 }
+
+/* global.css: reset and base element styles only. Component styles live in *.module.css. */
 
 *,
 *::before,
@@ -40,94 +65,407 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--header-height) + 20px);
+}
+
 body {
   margin: 0;
+  min-height: 100dvh;
   font-family: var(--font-body);
   line-height: 1.6;
   color: var(--fg);
-  background: var(--bg);
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(at 12% 8%, rgb(59 91 253 / 22%), transparent 46%),
+    radial-gradient(at 88% 4%, rgb(255 122 89 / 20%), transparent 42%),
+    radial-gradient(at 70% 92%, rgb(59 91 253 / 12%), transparent 50%);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
 }
 
 h1,
 h2,
 h3 {
-  margin: 0 0 12px;
   font-family: var(--font-display);
-  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+h1 {
+  line-height: 1.08;
+}
+
+h2 {
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  line-height: 1.15;
+}
+
+h3 {
+  font-size: 1.125rem;
+  line-height: 1.3;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+a {
+  color: var(--link);
+  text-underline-offset: 3px;
+}
+
+code,
+pre,
+kbd {
+  font-family: var(--font-mono);
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-on);
 }
 
 :focus-visible {
-  outline: 3px solid var(--accent);
+  outline: 3px solid var(--link);
   outline-offset: 3px;
 }
 
-/* Header */
+/* Form controls */
+label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--fg-2);
+}
+
+input:not([type="checkbox"]),
+select {
+  width: 100%;
+  min-height: var(--tap);
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font: inherit;
+  font-size: 16px;
+  color: var(--fg);
+  background-color: var(--surface);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+input:not([type="checkbox"]):focus,
+select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-ring);
+  outline: none;
+}
+
+input::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
+select {
+  appearance: none;
+  padding-inline-end: 38px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%2363666a' stroke-width='2'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+}
+
+[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Header, main and footer */
 .site-header {
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 40;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  padding: 12px var(--space);
+  gap: var(--space);
+  min-height: var(--header-height);
+  padding: 8px max(var(--page-pad), calc((100% - 1200px) / 2));
   border-bottom: 1px solid var(--border);
-  background: var(--bg);
+  background-color: var(--header-bg);
+  backdrop-filter: blur(12px) saturate(1.4);
 }
 
 .logo {
   font-family: var(--font-display);
-  font-size: 1.25rem;
   font-weight: 700;
   color: var(--fg);
   text-decoration: none;
 }
 
-.cart-link {
+.nav-list {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nav-link {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  font-weight: 600;
-  color: var(--fg);
+  min-height: var(--tap);
+  padding: 0 12px;
+  border-radius: var(--radius-md);
   text-decoration: none;
 }
 
-.cart-count {
-  min-width: 24px;
-  padding: 0 8px;
-  border-radius: 12px;
+.nav-link:hover {
+  background-color: var(--surface-2);
+}
+
+.site-main {
+  flex: 1;
+  width: 100%;
+  max-width: var(--page-max);
+  margin-inline: auto;
+  padding-inline: var(--page-pad);
+}
+
+.site-footer {
+  margin-top: 40px;
+  padding: 40px max(var(--page-pad), calc((100% - 1200px) / 2));
+  border-top: 1px solid var(--border);
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.site-footer p {
+  margin: 0;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: var(--tap);
+  min-height: var(--tap);
+  padding: 0 20px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.1;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    transform 0.15s,
+    filter 0.15s,
+    background-color 0.15s;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  color: var(--accent-on);
+  background: var(--accent);
+}
+
+.btn-primary:hover:not(:disabled) {
+  filter: brightness(0.94);
+}
+
+.btn-secondary {
+  color: var(--fg);
+  background: var(--surface);
+  border-color: var(--fg);
+}
+
+/* Looks like a nav link: same weight and padding. */
+.btn-ghost {
+  padding: 0 12px;
+  font-weight: inherit;
+  color: var(--link);
+  background: none;
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+
+.btn-lg {
+  min-height: 48px;
+  padding: 0 26px;
+  font-size: 1rem;
+}
+
+/* Cart badge in the header */
+.cart-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap);
+  height: var(--tap);
+  border-radius: 50%;
+  color: var(--fg);
+  transition: background-color 0.15s;
+}
+
+.cart-badge:hover {
+  background-color: var(--surface-2);
+}
+
+/* --second is the badge color. It stays light in dark mode, so the count uses dark ink. */
+.cart-badge-count {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 20px;
   text-align: center;
-  color: #0e1116;
+  color: var(--second-on);
   background: var(--second);
 }
 
-/* Page layout: one column on phones, products and cart side by side on wide screens */
-.layout {
+/* Page sections, hero and messages */
+/* Page.module.css: the spacing and title style every page section shares. */
+.page-section {
+  padding-block: clamp(40px, 7vw, 88px);
+}
+
+.page-title {
+  margin: 0 0 20px;
+}
+
+/* A short accent bar above each section title. */
+.page-title::before {
+  content: "";
+  display: block;
+  width: 32px;
+  height: 3px;
+  margin-bottom: 12px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.page-message {
   display: grid;
-  gap: calc(var(--space) * 2);
-  max-width: 1240px;
-  margin: 0 auto;
-  padding: calc(var(--space) * 2) var(--space);
+  gap: 12px;
+  justify-items: center;
+  padding: 20px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  text-align: center;
+  color: var(--muted);
+  background: var(--surface);
+}
+
+.page-message p {
+  margin: 0;
+}
+
+/* Products page: filters in a sidebar on desktop. */
+.with-sidebar {
+  display: grid;
+  gap: 20px 32px;
+  align-items: start;
 }
 
 @media (min-width: 1024px) {
-  .layout {
-    grid-template-columns: minmax(0, 1fr) 360px;
-    align-items: start;
+  .with-sidebar {
+    grid-template-columns: 260px minmax(0, 1fr);
   }
 }
 
-/* Controls */
-.controls {
+/* Home hero */
+.hero {
+  padding-block: clamp(56px, 9vw, 112px);
+}
+
+.hero > * {
+  animation: hero-rise 0.5s ease both;
+}
+
+.hero-title {
+  max-width: 18ch;
+  margin: 0;
+  font-size: clamp(2.4rem, 5.5vw, 4.4rem);
+  line-height: 1.05;
+}
+
+.hero-text {
+  max-width: 46ch;
+  margin: 16px 0 24px;
+  font-size: clamp(1.05rem, 1.4vw, 1.2rem);
+  color: var(--muted);
+}
+
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@media (min-width: 900px) {
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    column-gap: 48px;
+    align-items: center;
+  }
+
+  .hero > * {
+    grid-column: 1;
+  }
+
+  .hero::after {
+    content: "";
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    min-height: 320px;
+    border-radius: var(--radius-lg);
+    background:
+      radial-gradient(circle at 30% 30%, rgb(59 91 253 / 90%), transparent 55%),
+      radial-gradient(circle at 75% 70%, rgb(255 122 89 / 85%), transparent 55%), var(--surface-2);
+  }
+}
+
+/* Product filters */
+.filters {
   display: grid;
-  gap: 12px;
-  margin-bottom: var(--space);
-}
-
-@media (min-width: 768px) {
-  .controls {
-    grid-template-columns: 2fr 1fr 1fr;
-  }
+  gap: 12px 16px;
 }
 
 .field {
@@ -135,47 +473,25 @@ h3 {
   gap: 4px;
 }
 
-label {
-  font-size: 0.875rem;
-  font-weight: 600;
+@media (min-width: 768px) {
+  .filters {
+    grid-template-columns: 2fr 1fr 1fr;
+  }
 }
 
-input,
-select {
-  width: 100%;
-  min-height: 44px;
-  padding: 10px 14px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  font: inherit;
-  color: var(--fg);
-  background: var(--surface);
-}
-
-/* Buttons */
-button {
-  min-height: 44px;
-  padding: 0 20px;
-  border: 1px solid transparent;
-  border-radius: var(--radius);
-  font: inherit;
-  font-weight: 600;
-  color: var(--accent-on);
-  background: var(--accent);
-  cursor: pointer;
-}
-
-.button-secondary {
-  color: var(--fg);
-  background: var(--surface);
-  border-color: var(--fg);
-}
-
-button:disabled,
-input:disabled,
-select:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+/* Desktop: the controls become a sticky sidebar panel. */
+@media (min-width: 1024px) {
+  .filters {
+    position: sticky;
+    top: calc(var(--header-height) + 16px);
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-panel);
+  }
 }
 
 /* Status messages: loading, error, empty, no match */
@@ -183,44 +499,80 @@ select:disabled {
   display: grid;
   gap: 12px;
   justify-items: center;
+  margin-bottom: var(--space);
   padding: 20px;
   border: 1px dashed var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-md);
   text-align: center;
   color: var(--muted);
   background: var(--surface);
 }
 
-.status p {
+.status-message {
   margin: 0;
 }
 
 /* Product grid */
-.grid {
+.product-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr));
-  gap: var(--space);
+  gap: clamp(16px, 2vw, 24px);
 }
 
-.card {
+/* Product card */
+.product-card {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
+  height: 100%;
   padding: 20px;
   border-radius: var(--radius-lg);
   background: var(--surface);
+  animation: card-rise 0.45s ease both;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.card h3 {
+/* Bento rhythm: some tiles get a tint. */
+.product-card:nth-child(4n + 2) {
+  background: var(--surface-2);
+}
+
+.product-card:nth-child(5n + 3) {
+  background: var(--accent-soft);
+}
+
+.product-card:hover,
+.product-card:focus-within {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lift);
+}
+
+/* Placeholder art until products have images. */
+.product-card::before {
+  content: "";
+  display: block;
+  aspect-ratio: 4 / 3;
+  margin-bottom: 12px;
+  border-radius: calc(var(--radius-lg) - 4px);
+  background:
+    radial-gradient(rgb(14 17 22 / 8%) 1px, transparent 1.4px) 0 0 / 12px 12px,
+    linear-gradient(135deg, var(--accent-soft), var(--surface-2));
+}
+
+@keyframes card-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+.product-name {
   margin: 0;
 }
 
-.card button {
-  align-self: flex-start;
-  margin-top: auto;
-}
-
-.category {
+.product-category {
   margin: 0;
   font-size: 0.75rem;
   font-weight: 600;
@@ -229,26 +581,44 @@ select:disabled {
   color: var(--muted);
 }
 
-.price {
+.product-price {
   margin: 4px 0 12px;
   font-size: 1.25rem;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
 
-/* Cart */
-.cart-panel {
-  padding: 20px;
+.product-action {
+  align-self: flex-start;
+  margin-top: auto;
+}
+
+/* Loading placeholders */
+.skeleton-card {
+  min-height: 300px;
   border-radius: var(--radius-lg);
-  background: var(--surface);
+  background:
+    linear-gradient(90deg, transparent, rgb(255 255 255 / 45%), transparent) 0 0 / 200% 100%
+      no-repeat,
+    var(--surface-2);
+  animation: shimmer 1.4s linear infinite;
 }
 
-@media (min-width: 1024px) {
-  .cart-panel {
-    position: sticky;
-    top: 88px;
+@keyframes shimmer {
+  from {
+    background-position:
+      150% 0,
+      0 0;
+  }
+  to {
+    background-position:
+      -150% 0,
+      0 0;
   }
 }
 
+/* Cart list */
 .cart-list {
   display: grid;
   gap: 12px;
@@ -257,43 +627,57 @@ select:disabled {
   list-style: none;
 }
 
-.cart-row {
+/* Cart row */
+.cart-line {
   display: grid;
-  gap: 8px;
-  padding: 12px;
-  border-radius: var(--radius);
-  background: var(--surface-2);
+  gap: 12px;
+  padding: 16px 20px;
+  border-radius: var(--radius-md);
+  background: var(--surface);
 }
 
-.cart-row p {
+.cart-line-name {
   margin: 0;
-}
-
-.cart-row-name {
   font-weight: 700;
 }
 
-.cart-row-price {
+.cart-line-category {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--muted);
 }
 
-.cart-row-actions {
+.cart-line-price {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.cart-line-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
 }
 
-.cart-row-actions button {
-  padding: 0 14px;
-}
-
-.quantity {
+.cart-line-quantity {
   min-width: 2ch;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
   text-align: center;
 }
 
+@media (min-width: 768px) {
+  .cart-line {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+}
+
+/* Cart total */
 .cart-summary {
   display: flex;
   flex-wrap: wrap;
@@ -308,24 +692,128 @@ select:disabled {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Sign-up dialog */
+/* The dark, blurred layer behind the dialog. A click on it closes the dialog. */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: var(--space);
+  background: var(--backdrop);
+  backdrop-filter: blur(6px);
+}
+
+.dialog {
+  width: min(100% - 2 * var(--space), 480px);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-lg);
+  color: var(--fg);
+  background: var(--surface);
+  box-shadow: var(--shadow-dialog);
+  animation: pop 0.22s ease both;
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+.dialog-content {
+  padding: calc(var(--space) * 1.5);
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space);
+  margin-bottom: var(--space);
+}
+
+.dialog-title {
+  margin: 0;
+}
+
+/* Sign-up form */
+.register-form {
+  display: grid;
+  gap: var(--space);
+}
+
+.field {
+  display: grid;
+  gap: 4px;
+}
+
+.field-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .hint {
+  margin: 0;
+  font-size: 0.875rem;
   color: var(--muted);
 }
 
-.warning {
-  padding: 8px 12px;
-  border-radius: var(--radius);
+/* Toast (the welcome message) */
+.toast-region {
+  position: fixed;
+  right: var(--space);
+  bottom: var(--space);
+  left: var(--space);
+  z-index: 50;
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin: 0;
+  padding: 12px var(--space);
+  border-radius: var(--radius-md);
+  color: var(--accent-on);
+  box-shadow: 0 14px 34px -12px rgb(0 0 0 / 45%);
+  pointer-events: auto;
+  animation: slide-up 0.24s ease both;
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+.toast-success {
+  background: var(--accent);
+}
+
+.toast-error {
   color: #ffffff;
   background: var(--danger);
 }
 
-/* Footer */
-.site-footer {
-  padding: var(--space);
-  border-top: 1px solid var(--border);
-  font-size: 0.875rem;
-  color: var(--muted);
-  text-align: center;
+@media (min-width: 768px) {
+  .toast-region {
+    left: auto;
+    width: 360px;
+  }
 }

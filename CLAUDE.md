@@ -43,15 +43,17 @@ functions; it never copies their logic.
 - `src/main.tsx`: mounts `<App />` in `StrictMode`. Nothing else.
 - `src/App.tsx`: owns all the state, loads the products, and handles every cart change.
 - `src/components/`: one component per file. Each takes everything it needs as props.
-- `src/style.css`: all styles.
+- `src/style.css`: all styles, with plain class names: design tokens first, then base styles,
+  then one block per component.
 
 ## Components
 
 - One component per file. The file name matches the component. Named exports only, no
   `export default`.
 - Props are an `interface <Component>Props` in the same file, above the component.
-- Components below `App` hold no state. They show their props and call a callback prop
-  (`onAdd`, `onAction`, `onChange`) when the user clicks or types.
+- Components below `App` hold no shared state. They show their props and call a callback prop
+  (`onAdd`, `onAction`, `onChange`) when the user clicks or types. The one exception is
+  `RegisterForm`, which keeps its own field values: nothing else needs them.
 - Lists use a `key` from the data: `product.id`, `item.productId`, the category name. Never the
   index, never `Math.random()`.
 - Conditions in JSX use real booleans: `cart.length === 0 && …`, never `cart.length && …`
@@ -61,8 +63,8 @@ functions; it never copies their logic.
 
 ## State
 
-- All state lives in `App` (`useState`): products, load status, error message, retry counter,
-  filters, cart, save warning.
+- All shared state lives in `App` (`useState`): products, load status, error message, retry
+  counter, filters, cart, save warning, sign-up open, welcome name.
 - Never store what can be computed: the matching products, the categories, the item count and
   the total are computed on every render.
 - The cart starts as `useState(getCart)`. Every change calls a `cart.state.ts` function and
@@ -74,6 +76,8 @@ functions; it never copies their logic.
 
 - The products load in one `useEffect` that depends on `attempt`. "Try again" sets
   `status` to `"loading"` and adds 1 to `attempt`.
+- A second `useEffect` listens for the browser's `online` event. If the last load failed, it
+  does the same as "Try again". Its cleanup removes the listener.
 - The effect uses an `ignore` flag set in its cleanup, so an old answer never overwrites the
   state. In development `StrictMode` runs the effect twice; the first answer is ignored.
 - Never call `setState` directly in the effect body. Set state only inside `.then()` and
@@ -93,6 +97,12 @@ functions; it never copies their logic.
   Narrow with a check or a type guard.
 - Data from outside (API, localStorage) is `unknown` until a type guard checks it. The reused
   files already do this.
+
+## Design
+
+The look is fixed: design tokens at the top of `style.css`, the Bento style (big radius, tinted
+cards, gradient background), the hero, the filters sidebar, light and dark mode. Changing the
+code must never change the look. Never rewrite `style.css` unless asked.
 
 ## Rules from mistakes made while building this project
 
@@ -132,6 +142,11 @@ Each rule comes from a real mistake. The note under it says what happened.
 
 8. **Never add a package version you haven't checked.**
    Versions in `package.json` were once guessed. Run `npm view <package> version` first.
+
+9. **Simplifying the code never changes the design.**
+   While simplifying the code, `style.css` was rewritten from scratch and the hero, gradient,
+   card art and sidebar were lost. Only the code was meant to change. Keep the CSS and the
+   class names, and check the page against a screenshot.
 
 ## Commands
 

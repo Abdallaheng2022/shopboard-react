@@ -9,7 +9,7 @@ interface ProductListProps {
 
 export function ProductList({ products, onAdd }: ProductListProps) {
   return (
-    <div className="grid">
+    <div className="product-grid">
       {products.map((product) => (
         <ProductCard key={product.id} product={product} onAdd={onAdd} />
       ))}

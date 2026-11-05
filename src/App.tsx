@@ -4,6 +4,7 @@ import { CartPanel } from "./components/CartPanel";
 import { Header } from "./components/Header";
 import { ProductControls } from "./components/ProductControls";
 import { ProductList } from "./components/ProductList";
+import { RegisterForm } from "./components/RegisterForm";
 import { StatusMessage } from "./components/StatusMessage";
 import { getItemCount } from "./modules/cart/cart.logic";
 import {
@@ -30,6 +31,16 @@ import { getErrorMessage } from "./shared/api/errors";
 // Where loading the products stands.
 type Status = "loading" | "error" | "loaded";
 
+// One id per placeholder card shown while the products load. Fixed ids, never the index.
+const SKELETON_IDS = [
+  "skeleton-1",
+  "skeleton-2",
+  "skeleton-3",
+  "skeleton-4",
+  "skeleton-5",
+  "skeleton-6",
+];
+
 // Which cart.state function runs for each button on a cart row.
 const cartActions: Record<CartAction, (productId: number) => Cart> = {
   increase: increaseItem,
@@ -51,6 +62,9 @@ export function App() {
   // The cart starts as the one saved in localStorage.
   const [cart, setCart] = useState<Cart>(getCart);
   const [saveFailed, setSaveFailed] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
+  // The name of the user who just signed up, for the welcome message. Empty until then.
+  const [welcomeName, setWelcomeName] = useState("");
 
   // Loads the products when the page opens, and again after every "Try again".
   useEffect(() => {
@@ -78,6 +92,18 @@ export function App() {
     };
   }, [attempt]);
 
+  // When the connection comes back after a failed load, load the products again.
+  useEffect(() => {
+    function handleOnline(): void {
+      if (status === "error") {
+        setStatus("loading");
+        setAttempt((count) => count + 1);
+      }
+    }
+    window.addEventListener("online", handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
+  }, [status]);
+
   // Every cart change goes through here: show the new cart, and remember if saving failed.
   function updateCart(next: Cart): void {
     setCart(next);
@@ -86,7 +112,12 @@ export function App() {
 
   function handleRetry(): void {
     setStatus("loading");
-    setAttempt(attempt + 1);
+    setAttempt((count) => count + 1);
+  }
+
+  function handleRegister(name: string): void {
+    setWelcomeName(name);
+    setShowRegister(false);
   }
 
   function handleAdd(product: Product): void {
@@ -106,28 +137,57 @@ export function App() {
 
   return (
     <>
-      <Header itemCount={getItemCount(cart)} />
-      <main className="layout">
-        <section className="products" aria-labelledby="products-title">
-          <h1 id="products-title">Products</h1>
-          <ProductControls
-            filters={filters}
-            categories={getCategories(products)}
-            disabled={status !== "loaded" || products.length === 0}
-            onChange={setFilters}
-          />
-          {status === "loading" && <StatusMessage message="Loading products…" />}
-          {status === "error" && <StatusMessage message={errorMessage} onRetry={handleRetry} />}
-          {status === "loaded" && products.length === 0 && (
-            <StatusMessage message="No products are available right now. Please check back later." />
-          )}
-          {status === "loaded" && products.length > 0 && visibleProducts.length === 0 && (
-            <StatusMessage message="No products match your search. Try another name or category." />
-          )}
-          {status === "loaded" && visibleProducts.length > 0 && (
-            <ProductList products={visibleProducts} onAdd={handleAdd} />
-          )}
+      <Header itemCount={getItemCount(cart)} onSignUp={() => setShowRegister(true)} />
+      <main className="site-main">
+        <section className="hero" aria-labelledby="hero-title">
+          <h1 id="hero-title" className="hero-title">
+            Sell smarter.
+          </h1>
+          <p className="hero-text">Everything your shop needs, in one board.</p>
+          <div>
+            <a className="btn btn-primary btn-lg" href="#products">
+              Shop now
+            </a>
+          </div>
         </section>
+
+        <section id="products" className="page-section" aria-labelledby="products-title">
+          <h2 id="products-title" className="page-title">
+            Products
+          </h2>
+          <div className="with-sidebar">
+            <ProductControls
+              filters={filters}
+              categories={getCategories(products)}
+              disabled={status !== "loaded" || products.length === 0}
+              onChange={setFilters}
+            />
+            <div>
+              {status === "loading" && (
+                <>
+                  <StatusMessage message="Loading products…" />
+                  {/* Grey placeholder cards, the same size as the real ones. */}
+                  <div className="product-grid" aria-busy="true">
+                    {SKELETON_IDS.map((id) => (
+                      <div key={id} className="skeleton-card" aria-hidden="true" />
+                    ))}
+                  </div>
+                </>
+              )}
+              {status === "error" && <StatusMessage message={errorMessage} onRetry={handleRetry} />}
+              {status === "loaded" && products.length === 0 && (
+                <StatusMessage message="No products are available right now. Please check back later." />
+              )}
+              {status === "loaded" && products.length > 0 && visibleProducts.length === 0 && (
+                <StatusMessage message="No products match your search. Try another name or category." />
+              )}
+              {status === "loaded" && visibleProducts.length > 0 && (
+                <ProductList products={visibleProducts} onAdd={handleAdd} />
+              )}
+            </div>
+          </div>
+        </section>
+
         <CartPanel
           cart={cart}
           products={products}
@@ -136,9 +196,19 @@ export function App() {
           onClear={() => updateCart(clearCart())}
         />
       </main>
+
       <footer className="site-footer">
         <p>© 2026 ShopBoard</p>
       </footer>
+
+      {showRegister && (
+        <RegisterForm onRegister={handleRegister} onClose={() => setShowRegister(false)} />
+      )}
+      {welcomeName !== "" && (
+        <ul className="toast-region" role="status">
+          <li className="toast toast-success">Account created. Welcome, {welcomeName}!</li>
+        </ul>
+      )}
     </>
   );
 }

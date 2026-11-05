@@ -8,9 +8,9 @@ interface StatusMessageProps {
 export function StatusMessage({ message, onRetry }: StatusMessageProps) {
   return (
     <div className="status" role="status">
-      <p>{message}</p>
+      <p className="status-message">{message}</p>
       {onRetry !== undefined && (
-        <button type="button" className="button-secondary" onClick={onRetry}>
+        <button type="button" className="btn btn-secondary" onClick={onRetry}>
           Try again
         </button>
       )}
