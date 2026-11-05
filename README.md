@@ -1,120 +1,33 @@
 # ShopBoard (React)
 
-A small online shop built with React, TypeScript and Vite. Users can browse products, add
-them to a cart, change quantities and see the cart total. It is the React version of the
-vanilla TypeScript ShopBoard: the types, API, logic and cart-state files are reused
-unchanged, and React components replace the old DOM code.
+A small online shop built with React, TypeScript and Vite. Users can browse products, search,
+filter and sort them, add them to a cart, change quantities and see the total. It is the React
+version of the vanilla TypeScript ShopBoard: the types, API, logic and cart-state files are
+reused unchanged, and React components replace the old DOM code.
 
 ## Features
 
-- Products loaded from the ShopBoard API and validated before use
+- Products loaded from the ShopBoard API and checked before use
 - Search by name, filter by category and sort by price
-- Pages: home, products, cart, and a "page not found" page
-- Cart badge in the header with the number of items, linking to the cart page
-- Cart: add items, change quantity, remove items, clear the cart and see the total
+- Cart next to the products: add items, change quantity, remove items, clear the cart, see the
+  total and the item count in the header
 - A quantity of zero removes the product, and out-of-stock products can't be added
 - The cart is saved in localStorage, so it survives a page refresh
-- Loading placeholders, empty states, and error messages with a "Try again" button
-- Clear messages for offline, network, timeout, HTTP and invalid-data errors; products
-  reload when the connection returns
-- Toast notifications, a sign-up dialog with native browser validation
-- Mobile-first, responsive layout with light and dark mode
+- A message for each state: loading, error with a "Try again" button, empty store, and no
+  search results
+- A warning when the cart can't be saved on this device
+- Mobile-first layout, light and dark mode
 
 ## Tech stack
 
 - [Vite](https://vite.dev/), [React 19](https://react.dev/), TypeScript with `"strict": true`
-- [React Router](https://reactrouter.com/) for pages
-- React Context for shared state; `useSyncExternalStore` connects the reused cart state to React
-- CSS Modules and design tokens (CSS custom properties)
+- React only with `useState`, `useEffect` and props: no router and no state library
+- One CSS file with CSS custom properties
 - oxlint, Prettier, husky and lint-staged
-- Vitest and React Testing Library
-
-## Component tree
-
-Every component in `src/`, as React renders it. Props are in `( )`; a Button's text is its
-`children` and isn't listed. `state:` is what the component owns. `uses` means it reads a context through its hook (`useCart()`,
-`useProducts()`, `useToast()`).
-
-```
-App
-└── AppProviders                          route element, renders the providers around <Outlet />
-    └── ToastProvider (children)          state: toasts
-        ├── AppNotices                    uses toast · ref: previousOnline
-        ├── ProductsProvider (children)   state: state (loading/error/success), attempt
-        │   └── CartProvider (children)   reads the cart from cart.state.ts · uses products, toast
-        │       └── MainLayout
-        │           ├── Header            state: isRegisterOpen · uses cart
-        │           │   ├── Button (variant, onClick)                       "Sign up"
-        │           │   ├── CartBadge (itemCount)
-        │           │   └── RegisterDialog (open, onClose)                  uses toast
-        │           │       └── Dialog (open, title, onClose, children)
-        │           │           ├── Button (variant, aria-label, onClick)   "×"
-        │           │           └── Button (type)                           "Create account"
-        │           ├── <Outlet />: the page for the current URL
-        │           │   ├── HomePage                      /
-        │           │   │   └── ButtonLink (to, size)
-        │           │   ├── ProductsPage                  /products · state: filters · uses products, cart, toast
-        │           │   │   ├── ProductFilters (filters, categories, disabled, onChange)
-        │           │   │   └── ProductResults (state, visibleProducts, onRetry, onAddToCart)
-        │           │   │       ├── ProductsStatus (message, onRetry?)        loading, error, empty, no match
-        │           │   │       │   └── Button (variant, onClick)             "Try again", only on error
-        │           │   │       ├── GridFrame (busy, children)                loading only
-        │           │   │       │   └── SkeletonCard × 6
-        │           │   │       └── ProductGrid (products, onAddToCart)       loaded only
-        │           │   │           └── GridFrame (busy, children)
-        │           │   │               └── ProductCard (product, onAddToCart) × each product
-        │           │   │                   └── Button (className, aria-label, onClick | disabled)
-        │           │   ├── CartPage                      /cart · uses cart, products, toast
-        │           │   │   ├── ButtonLink (to, variant)                  empty cart
-        │           │   │   ├── Button (variant, onClick)                 "Try again", products failed
-        │           │   │   ├── CartList (lines, onIncrease, onDecrease, onRemove)
-        │           │   │   │   └── CartLine (line, onIncrease, onDecrease, onRemove) × each line
-        │           │   │   │       └── Button (variant, aria-label, onClick) × 3   − + Remove; + also gets disabled
-        │           │   │   └── CartSummary (total, canClear, onClear)
-        │           │   │       └── Button (variant, disabled, onClick)   "Clear cart"
-        │           │   ├── NotFoundPage                  any other URL
-        │           │   │   └── ButtonLink (to, variant)
-        │           │   └── ErrorPage                     replaces the page if it crashes
-        │           │       └── Button (variant, onClick)                 "Reload"
-        │           └── Footer
-        └── (toast list: <li> items drawn by ToastProvider, not components)
-```
-
-The page under `<Outlet />` is one of HomePage, ProductsPage, CartPage, NotFoundPage or
-ErrorPage, never two at once. `ProductResults` shows one branch at a time, the same way.
-
-### Who owns each piece of state
-
-| State                         | Owner                                                  | How others get it                                                           |
-| ----------------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------- |
-| Products and their load state | `ProductsProvider` (`useState`: `state`, `attempt`)    | `useProducts()`; `reload()` for "Try again"                                 |
-| Cart lines                    | `cart.state.ts` (outside React, saved in localStorage) | `CartProvider` reads it with `useSyncExternalStore`; others use `useCart()` |
-| Search text, category, sort   | `ProductsPage` (`useState` inside `useProductFilters`) | props to `ProductFilters`                                                   |
-| Sign-up dialog open or closed | `Header` (`useState`: `isRegisterOpen`)                | props `open` and `onClose` to `RegisterDialog`                              |
-| Toasts on screen              | `ToastProvider` (`useState`: `toasts`)                 | `useToast().showToast()`                                                    |
-| Online or offline             | the browser (`navigator.onLine`)                       | `useOnlineStatus()` in `AppNotices`                                         |
-| Sign-up form fields           | the browser (an uncontrolled `<form>`)                 | read on submit, then `form.reset()`                                         |
-
-Computed, not stored: the item count, total and cart entries (`CartProvider`), the
-categories and the matching products (`useProductFilters`).
-
-### Checking it in React DevTools
-
-Open the **Components** tab. The tree above matches it, with three kinds of extra entries
-that come from libraries, not from `src/`:
-
-- React Router: `RouterProvider`, `DataRoutes`, `RenderedRoute`, `Outlet`, `Link`, `NavLink`.
-- Context providers: `ToastContext.Provider`, `ProductsContext.Provider`,
-  `CartContext.Provider`.
-- `StrictMode`, above `App`, from `main.tsx`.
-
-Select a component to see its props on the right. State from a hook shows under **hooks**:
-`ProductsPage` lists the `State` from `useProductFilters`, and `CartProvider` lists
-`SyncExternalStore` for the cart.
 
 ## Getting started
 
-Requirements: Node.js (LTS) and Git.
+Requirements: Node.js 20.19+ or 22.12+, and Git.
 
 ```bash
 npm install
@@ -129,8 +42,6 @@ npm run dev
 | `npm run build`        | Build the production version into `dist/` |
 | `npm run typecheck`    | Check types with the TypeScript compiler  |
 | `npm run lint`         | Run oxlint; any warning fails             |
-| `npm test`             | Run the tests once                        |
-| `npm run test:watch`   | Run the tests on every change             |
 | `npm run format`       | Format all files with Prettier            |
 | `npm run format:check` | Check formatting without changing files   |
 
@@ -138,25 +49,82 @@ npm run dev
 
 ```
 src/
-├── main.tsx            # Mounts the app
-├── app/                # Router, providers, app-wide notices
-├── layouts/            # MainLayout: header, page, footer
-├── pages/              # One component per route
-├── modules/
-│   ├── products/       # Loading, filtering and showing products
-│   ├── cart/           # Cart state, storage and components
-│   └── register/       # Sign-up dialog
-├── components/ui/      # Button, Dialog, Skeleton, Toast
-├── shared/             # API client and errors, hooks, formatting
-└── styles/             # Design tokens and global styles
+├── main.tsx                     # Mounts <App />
+├── App.tsx                      # Owns all the state, loads the products, handles the cart
+├── style.css                    # All styles
+├── components/                  # One React component per file
+│   ├── Header.tsx
+│   ├── ProductControls.tsx
+│   ├── StatusMessage.tsx
+│   ├── ProductList.tsx
+│   ├── ProductCard.tsx
+│   ├── CartPanel.tsx
+│   └── CartRow.tsx
+├── modules/                     # Reused from the vanilla version, unchanged
+│   ├── products/
+│   │   ├── products.types.ts    # Product, SortOrder, Filters
+│   │   ├── products.api.ts      # fetchProducts(): GET, type guard, API → Product
+│   │   └── products.logic.ts    # Search, category filter, price sort, find by id
+│   └── cart/
+│       ├── cart.types.ts        # CartItem, Cart, CartAction
+│       ├── cart.state.ts        # The cart, saved in localStorage
+│       └── cart.logic.ts        # Item count and total
+└── shared/                      # Reused from the vanilla version, unchanged
+    ├── api/client.ts            # getJson(): the only fetch, with a timeout
+    ├── api/errors.ts            # ApiError and the message the user sees
+    └── ui/format.ts             # formatPrice
 ```
 
-- Each module has an `index.ts`; other code imports a module only through it.
-- Every request goes through `getJson` in `src/shared/api/client.ts`.
-- The reused vanilla files (`*.types.ts`, `*.api.ts`, `*.logic.ts`, `cart.state.ts`) are never
-  edited in this repo.
+The files in `src/modules/` and `src/shared/` are copied from the vanilla version and never
+edited here.
 
-The full rules (components, layouts, API, state, tests) are in [CLAUDE.md](CLAUDE.md). Two
-Claude Code skills from Vercel (React best practices and composition patterns) are in
-`.claude/skills/`. The
-design tokens are in [src/styles/tokens.css](src/styles/tokens.css).
+## Component tree
+
+Every component, as React renders it. Props are in `( )`.
+
+```
+App                                         state: products, status, errorMessage, attempt,
+│                                                  filters, cart, saveFailed
+├── Header (itemCount)
+├── ProductControls (filters, categories, disabled, onChange)
+├── StatusMessage (message, onRetry?)        one of: loading, error, empty store, no match
+├── ProductList (products, onAdd)           when there are products to show
+│   └── ProductCard (product, onAdd)        one per product, key = product.id
+└── CartPanel (cart, products, saveFailed, onAction, onClear)
+    └── CartRow (item, product, onAction)   one per cart line, key = item.productId
+```
+
+`StatusMessage` and `ProductList` don't show at the same time: App shows a message, or the
+list.
+
+### Who owns each piece of state
+
+All state is in `App`. Every other component gets what it needs as props and reports clicks
+back with a callback prop (`onChange`, `onAdd`, `onAction`, `onClear`, `onRetry`).
+
+| State          | What it holds                                    | Changed by                             |
+| -------------- | ------------------------------------------------ | -------------------------------------- |
+| `products`     | Every product from the API                       | the load in `useEffect`                |
+| `status`       | `"loading"`, `"error"` or `"loaded"`             | the load; "Try again" sets `"loading"` |
+| `errorMessage` | The message shown when the load fails            | the load                               |
+| `attempt`      | A counter; changing it loads the products again  | "Try again"                            |
+| `filters`      | The search text, category and sort               | `ProductControls` through `onChange`   |
+| `cart`         | The cart lines, as returned by `cart.state.ts`   | add, +, −, Remove, Clear cart          |
+| `saveFailed`   | True when the last cart change couldn't be saved | every cart change                      |
+
+Computed on every render, not stored: the products that match the filters, the category list,
+the item count and the total.
+
+### Checking it in React DevTools
+
+Open the **Components** tab. It shows the same tree, plus `StrictMode` above `App`. Select
+`App` to see its 7 `State` hooks and its `Effect`; select any other component to see its props.
+
+## Code quality
+
+- TypeScript runs in strict mode. The code uses no `any`, no `as` and no `!`.
+- A husky pre-commit hook runs lint-staged: oxlint and Prettier on the staged files. A lint
+  warning blocks the commit.
+
+The rules for working on this project are in [CLAUDE.md](CLAUDE.md). Two Claude Code skills
+from Vercel (React best practices and composition patterns) are in `.claude/skills/`.

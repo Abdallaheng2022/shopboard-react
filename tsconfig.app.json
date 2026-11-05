@@ -16,11 +16,6 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
-    /* "@/features/products" → "src/features/products". Same alias in vite.config.ts. */
-    "paths": {
-      "@/*": ["./src/*"]
-    },
-
     /* Type checking */
     "strict": true,
     "noUnusedLocals": true,
