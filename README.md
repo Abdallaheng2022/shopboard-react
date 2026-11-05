@@ -29,6 +29,89 @@ unchanged, and React components replace the old DOM code.
 - oxlint, Prettier, husky and lint-staged
 - Vitest and React Testing Library
 
+## Component tree
+
+Every component in `src/`, as React renders it. Props are in `( )`; a Button's text is its
+`children` and isn't listed. `state:` is what the component owns. `uses` means it reads a context through its hook (`useCart()`,
+`useProducts()`, `useToast()`).
+
+```
+App
+└── AppProviders                          route element, renders the providers around <Outlet />
+    └── ToastProvider (children)          state: toasts
+        ├── AppNotices                    uses toast · ref: previousOnline
+        ├── ProductsProvider (children)   state: state (loading/error/success), attempt
+        │   └── CartProvider (children)   reads the cart from cart.state.ts · uses products, toast
+        │       └── MainLayout
+        │           ├── Header            state: isRegisterOpen · uses cart
+        │           │   ├── Button (variant, onClick)                       "Sign up"
+        │           │   ├── CartBadge (itemCount)
+        │           │   └── RegisterDialog (open, onClose)                  uses toast
+        │           │       └── Dialog (open, title, onClose, children)
+        │           │           ├── Button (variant, aria-label, onClick)   "×"
+        │           │           └── Button (type)                           "Create account"
+        │           ├── <Outlet />: the page for the current URL
+        │           │   ├── HomePage                      /
+        │           │   │   └── ButtonLink (to, size)
+        │           │   ├── ProductsPage                  /products · state: filters · uses products, cart, toast
+        │           │   │   ├── ProductFilters (filters, categories, disabled, onChange)
+        │           │   │   └── ProductResults (state, visibleProducts, onRetry, onAddToCart)
+        │           │   │       ├── ProductsStatus (message, onRetry?)        loading, error, empty, no match
+        │           │   │       │   └── Button (variant, onClick)             "Try again", only on error
+        │           │   │       ├── GridFrame (busy, children)                loading only
+        │           │   │       │   └── SkeletonCard × 6
+        │           │   │       └── ProductGrid (products, onAddToCart)       loaded only
+        │           │   │           └── GridFrame (busy, children)
+        │           │   │               └── ProductCard (product, onAddToCart) × each product
+        │           │   │                   └── Button (className, aria-label, onClick | disabled)
+        │           │   ├── CartPage                      /cart · uses cart, products, toast
+        │           │   │   ├── ButtonLink (to, variant)                  empty cart
+        │           │   │   ├── Button (variant, onClick)                 "Try again", products failed
+        │           │   │   ├── CartList (lines, onIncrease, onDecrease, onRemove)
+        │           │   │   │   └── CartLine (line, onIncrease, onDecrease, onRemove) × each line
+        │           │   │   │       └── Button (variant, aria-label, onClick) × 3   − + Remove; + also gets disabled
+        │           │   │   └── CartSummary (total, canClear, onClear)
+        │           │   │       └── Button (variant, disabled, onClick)   "Clear cart"
+        │           │   ├── NotFoundPage                  any other URL
+        │           │   │   └── ButtonLink (to, variant)
+        │           │   └── ErrorPage                     replaces the page if it crashes
+        │           │       └── Button (variant, onClick)                 "Reload"
+        │           └── Footer
+        └── (toast list: <li> items drawn by ToastProvider, not components)
+```
+
+The page under `<Outlet />` is one of HomePage, ProductsPage, CartPage, NotFoundPage or
+ErrorPage, never two at once. `ProductResults` shows one branch at a time, the same way.
+
+### Who owns each piece of state
+
+| State                         | Owner                                                  | How others get it                                                           |
+| ----------------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------- |
+| Products and their load state | `ProductsProvider` (`useState`: `state`, `attempt`)    | `useProducts()`; `reload()` for "Try again"                                 |
+| Cart lines                    | `cart.state.ts` (outside React, saved in localStorage) | `CartProvider` reads it with `useSyncExternalStore`; others use `useCart()` |
+| Search text, category, sort   | `ProductsPage` (`useState` inside `useProductFilters`) | props to `ProductFilters`                                                   |
+| Sign-up dialog open or closed | `Header` (`useState`: `isRegisterOpen`)                | props `open` and `onClose` to `RegisterDialog`                              |
+| Toasts on screen              | `ToastProvider` (`useState`: `toasts`)                 | `useToast().showToast()`                                                    |
+| Online or offline             | the browser (`navigator.onLine`)                       | `useOnlineStatus()` in `AppNotices`                                         |
+| Sign-up form fields           | the browser (an uncontrolled `<form>`)                 | read on submit, then `form.reset()`                                         |
+
+Computed, not stored: the item count, total and cart entries (`CartProvider`), the
+categories and the matching products (`useProductFilters`).
+
+### Checking it in React DevTools
+
+Open the **Components** tab. The tree above matches it, with three kinds of extra entries
+that come from libraries, not from `src/`:
+
+- React Router: `RouterProvider`, `DataRoutes`, `RenderedRoute`, `Outlet`, `Link`, `NavLink`.
+- Context providers: `ToastContext.Provider`, `ProductsContext.Provider`,
+  `CartContext.Provider`.
+- `StrictMode`, above `App`, from `main.tsx`.
+
+Select a component to see its props on the right. State from a hook shows under **hooks**:
+`ProductsPage` lists the `State` from `useProductFilters`, and `CartProvider` lists
+`SyncExternalStore` for the cart.
+
 ## Getting started
 
 Requirements: Node.js (LTS) and Git.
