@@ -64,7 +64,7 @@ functions; it never copies their logic.
 ## State
 
 - All shared state lives in `App` (`useState`): products, load status, error message, retry
-  counter, filters, cart, save warning, sign-up open, welcome name.
+  counter, filters, cart, save warning, cart open, sign-up open, welcome name.
 - Never store what can be computed: the matching products, the categories, the item count and
   the total are computed on every render.
 - The cart starts as `useState(getCart)`. Every change calls a `cart.state.ts` function and
@@ -101,7 +101,8 @@ functions; it never copies their logic.
 ## Design
 
 The look is fixed: design tokens at the top of `style.css`, the Bento style (big radius, tinted
-cards, gradient background), the hero, the filters sidebar, light and dark mode. Changing the
+cards, gradient background), the hero, the filters sidebar, the cart drawer that slides in
+from the right, light and dark mode. Changing the
 code must never change the look. Never rewrite `style.css` unless asked.
 
 ## Rules from mistakes made while building this project

@@ -1,10 +1,11 @@
-// Header.tsx: the logo, the "Shop" link, the "Sign up" button and the cart badge.
+// Header.tsx: the logo, the "Shop" link, the "Sign up" button and the cart button.
 interface HeaderProps {
   itemCount: number;
   onSignUp: () => void;
+  onOpenCart: () => void;
 }
 
-export function Header({ itemCount, onSignUp }: HeaderProps) {
+export function Header({ itemCount, onSignUp, onOpenCart }: HeaderProps) {
   return (
     <header className="site-header">
       <a className="logo" href="/">
@@ -24,7 +25,12 @@ export function Header({ itemCount, onSignUp }: HeaderProps) {
           </li>
         </ul>
       </nav>
-      <a className="cart-badge" href="#cart" aria-label={`Cart, ${itemCount} items`}>
+      <button
+        type="button"
+        className="cart-badge"
+        aria-label={`Open cart, ${itemCount} items`}
+        onClick={onOpenCart}
+      >
         <svg
           viewBox="0 0 24 24"
           width="24"
@@ -43,7 +49,7 @@ export function Header({ itemCount, onSignUp }: HeaderProps) {
         <span className="cart-badge-count" aria-hidden="true">
           {itemCount}
         </span>
-      </a>
+      </button>
     </header>
   );
 }

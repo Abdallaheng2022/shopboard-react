@@ -331,8 +331,12 @@ select {
   justify-content: center;
   width: var(--tap);
   height: var(--tap);
+  padding: 0;
+  border: 0;
   border-radius: 50%;
   color: var(--fg);
+  background: none;
+  cursor: pointer;
   transition: background-color 0.15s;
 }
 
@@ -693,6 +697,65 @@ select {
   font-size: 1.25rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+}
+
+/* Cart drawer: slides in from the right, over a dark layer */
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  justify-content: flex-end;
+  background: var(--backdrop);
+  backdrop-filter: blur(6px);
+}
+
+.cart-drawer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space);
+  width: min(100%, 420px);
+  height: 100dvh;
+  padding: 24px;
+  overflow-y: auto;
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+  color: var(--fg);
+  background: var(--surface);
+  box-shadow: var(--shadow-dialog);
+  animation: cart-slide-in 0.24s ease-out both;
+}
+
+@keyframes cart-slide-in {
+  from {
+    transform: translateX(100%);
+  }
+}
+
+.cart-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space);
+}
+
+.cart-drawer-title {
+  margin: 0;
+}
+
+/* The drawer is narrow on every screen, so each row stays stacked, on a tinted tile. */
+.cart-drawer .cart-list {
+  flex: 1;
+  align-content: start;
+  margin: 0;
+}
+
+.cart-drawer .cart-line {
+  grid-template-columns: 1fr;
+  background: var(--surface-2);
+}
+
+.cart-drawer .toast {
+  margin: 0;
 }
 
 /* Sign-up dialog */

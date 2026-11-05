@@ -1,6 +1,6 @@
 // App.tsx: the whole shop. App owns every piece of state and passes it down as props.
 import { useEffect, useState } from "react";
-import { CartPanel } from "./components/CartPanel";
+import { CartDrawer } from "./components/CartDrawer";
 import { Header } from "./components/Header";
 import { ProductControls } from "./components/ProductControls";
 import { ProductList } from "./components/ProductList";
@@ -62,6 +62,7 @@ export function App() {
   // The cart starts as the one saved in localStorage.
   const [cart, setCart] = useState<Cart>(getCart);
   const [saveFailed, setSaveFailed] = useState(false);
+  const [showCart, setShowCart] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
   // The name of the user who just signed up, for the welcome message. Empty until then.
   const [welcomeName, setWelcomeName] = useState("");
@@ -123,6 +124,8 @@ export function App() {
   function handleAdd(product: Product): void {
     if (!product.inStock) return;
     updateCart(addItem(product.id));
+    // Open the cart so the user sees the product was added.
+    setShowCart(true);
   }
 
   function handleCartAction(action: CartAction, productId: number): void {
@@ -137,7 +140,11 @@ export function App() {
 
   return (
     <>
-      <Header itemCount={getItemCount(cart)} onSignUp={() => setShowRegister(true)} />
+      <Header
+        itemCount={getItemCount(cart)}
+        onSignUp={() => setShowRegister(true)}
+        onOpenCart={() => setShowCart(true)}
+      />
       <main className="site-main">
         <section className="hero" aria-labelledby="hero-title">
           <h1 id="hero-title" className="hero-title">
@@ -187,20 +194,22 @@ export function App() {
             </div>
           </div>
         </section>
-
-        <CartPanel
-          cart={cart}
-          products={products}
-          saveFailed={saveFailed}
-          onAction={handleCartAction}
-          onClear={() => updateCart(clearCart())}
-        />
       </main>
 
       <footer className="site-footer">
         <p>© 2026 ShopBoard</p>
       </footer>
 
+      {showCart && (
+        <CartDrawer
+          cart={cart}
+          products={products}
+          saveFailed={saveFailed}
+          onAction={handleCartAction}
+          onClear={() => updateCart(clearCart())}
+          onClose={() => setShowCart(false)}
+        />
+      )}
       {showRegister && (
         <RegisterForm onRegister={handleRegister} onClose={() => setShowRegister(false)} />
       )}

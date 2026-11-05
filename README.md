@@ -9,7 +9,9 @@ reused unchanged, and React components replace the old DOM code.
 
 - Products loaded from the ShopBoard API and checked before use
 - Search by name, filter by category and sort by price
-- One page: a hero, the products with the filters in a sidebar, then the cart
+- One page: a hero, then the products with the filters in a sidebar
+- Cart drawer that slides in from the right: open it with the cart icon; it also opens when a
+  product is added
 - Cart: add items, change quantity, remove items, clear the cart, see the total, and the item
   count on the cart icon in the header
 - A quantity of zero removes the product, and out-of-stock products can't be added
@@ -60,7 +62,7 @@ src/
 │   ├── StatusMessage.tsx
 │   ├── ProductList.tsx
 │   ├── ProductCard.tsx
-│   ├── CartPanel.tsx
+│   ├── CartDrawer.tsx
 │   ├── CartRow.tsx
 │   └── RegisterForm.tsx
 ├── modules/                     # Reused from the vanilla version, unchanged
@@ -87,13 +89,13 @@ Every component, as React renders it. Props are in `( )`.
 
 ```
 App                                         state: products, status, errorMessage, attempt, filters,
-│                                                  cart, saveFailed, showRegister, welcomeName
-├── Header (itemCount, onSignUp)
+│                                                  cart, saveFailed, showCart, showRegister, welcomeName
+├── Header (itemCount, onSignUp, onOpenCart)
 ├── ProductControls (filters, categories, disabled, onChange)
 ├── StatusMessage (message, onRetry?)        one of: loading, error, empty store, no match
 ├── ProductList (products, onAdd)           when there are products to show
 │   └── ProductCard (product, onAdd)        one per product, key = product.id
-├── CartPanel (cart, products, saveFailed, onAction, onClear)
+├── CartDrawer (cart, products, saveFailed, onAction, onClear, onClose)   only while open
 │   └── CartRow (item, product, onAction)   one per cart line, key = item.productId
 └── RegisterForm (onRegister, onClose)      only after "Sign up" · state: name, email, password, agreed
 ```
@@ -106,21 +108,22 @@ list. While loading, App also shows six placeholder cards (plain `<div>`s, keys 
 
 All shared state is in `App`. Every other component gets what it needs as props and reports
 clicks back with a callback prop (`onChange`, `onAdd`, `onAction`, `onClear`, `onRetry`,
-`onSignUp`, `onRegister`, `onClose`). The only other state is the sign-up form's own fields,
+`onSignUp`, `onOpenCart`, `onRegister`, `onClose`). The only other state is the sign-up form's own fields,
 in `RegisterForm`: nothing else needs them.
 
-| State                                 | What it holds                                    | Changed by                                 |
-| ------------------------------------- | ------------------------------------------------ | ------------------------------------------ |
-| `products`                            | Every product from the API                       | the load in `useEffect`                    |
-| `status`                              | `"loading"`, `"error"` or `"loaded"`             | the load; "Try again" sets `"loading"`     |
-| `errorMessage`                        | The message shown when the load fails            | the load                                   |
-| `attempt`                             | A counter; changing it loads the products again  | "Try again", or the connection coming back |
-| `filters`                             | The search text, category and sort               | `ProductControls` through `onChange`       |
-| `cart`                                | The cart lines, as returned by `cart.state.ts`   | add, +, −, Remove, Clear cart              |
-| `saveFailed`                          | True when the last cart change couldn't be saved | every cart change                          |
-| `showRegister`                        | True while the sign-up form is open              | "Sign up", ×, a click outside, submitting  |
-| `welcomeName`                         | The name of the user who just signed up          | submitting the form                        |
-| `name`, `email`, `password`, `agreed` | The sign-up fields, in `RegisterForm`            | typing in the form                         |
+| State                                 | What it holds                                    | Changed by                                       |
+| ------------------------------------- | ------------------------------------------------ | ------------------------------------------------ |
+| `products`                            | Every product from the API                       | the load in `useEffect`                          |
+| `status`                              | `"loading"`, `"error"` or `"loaded"`             | the load; "Try again" sets `"loading"`           |
+| `errorMessage`                        | The message shown when the load fails            | the load                                         |
+| `attempt`                             | A counter; changing it loads the products again  | "Try again", or the connection coming back       |
+| `filters`                             | The search text, category and sort               | `ProductControls` through `onChange`             |
+| `cart`                                | The cart lines, as returned by `cart.state.ts`   | add, +, −, Remove, Clear cart                    |
+| `saveFailed`                          | True when the last cart change couldn't be saved | every cart change                                |
+| `showCart`                            | True while the cart drawer is open               | the cart icon, "Add to cart", ×, a click outside |
+| `showRegister`                        | True while the sign-up form is open              | "Sign up", ×, a click outside, submitting        |
+| `welcomeName`                         | The name of the user who just signed up          | submitting the form                              |
+| `name`, `email`, `password`, `agreed` | The sign-up fields, in `RegisterForm`            | typing in the form                               |
 
 Computed on every render, not stored: the products that match the filters, the category list,
 the item count and the total.
@@ -128,7 +131,7 @@ the item count and the total.
 ### Checking it in React DevTools
 
 Open the **Components** tab. It shows the same tree, plus `StrictMode` above `App`. Select
-`App` to see its 9 `State` hooks and 2 `Effect`s (load the products, reload when back online);
+`App` to see its 10 `State` hooks and 2 `Effect`s (load the products, reload when back online);
 select `RegisterForm` to see its 4 `State` hooks; select any other component to see its props.
 
 ## Code quality
