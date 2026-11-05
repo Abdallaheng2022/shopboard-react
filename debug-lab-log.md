@@ -1,4 +1,3 @@
-ر# Debug lab log
 # Debug lab log
 
 The five planted bugs in the shop at `shopboard-api.vercel.app/debug-lab`, found with the
