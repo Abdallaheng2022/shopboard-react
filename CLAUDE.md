@@ -41,8 +41,8 @@ functions; it never copies their logic.
 ## Structure
 
 - `src/main.tsx`: mounts `<App />` in `StrictMode`. Nothing else.
-- `src/App.tsx`: owns all the state, loads the products, and handles every cart change.
-- `src/components/`: one component per file. Each takes everything it needs as props.
+- `src/App.tsx`: puts the page together. It holds only the state more than one part needs.
+- `src/components/`: one component per file. Each part of the page handles its own work.
 - `src/style.css`: all styles, with plain class names: design tokens first, then base styles,
   then one block per component.
 
@@ -51,9 +51,10 @@ functions; it never copies their logic.
 - One component per file. The file name matches the component. Named exports only, no
   `export default`.
 - Props are an `interface <Component>Props` in the same file, above the component.
-- Components below `App` hold no shared state. They show their props and call a callback prop
-  (`onAdd`, `onAction`, `onChange`) when the user clicks or types. The one exception is
-  `RegisterForm`, which keeps its own field values: nothing else needs them.
+- Small components (`ProductCard`, `CartRow`, `ProductControls`, `StatusMessage`) hold no
+  state. They show their props and call a callback prop (`onAdd`, `onAction`, `onChange`)
+  when the user clicks or types. The parts of the page (`ProductsSection`, `CartDrawer`,
+  `Header`) hold their own state and logic; see "App.tsx stays small".
 - Lists use a `key` from the data: `product.id`, `item.productId`, the category name. Never the
   index, never `Math.random()`.
 - Conditions in JSX use real booleans: `cart.length === 0 && …`, never `cart.length && …`
@@ -61,20 +62,45 @@ functions; it never copies their logic.
 - Never change a prop or state value in place (`item.quantity++`, `products.sort()`). Make a new
   value. The reused files already return a new cart or a sorted copy.
 
+## App.tsx stays small
+
+`App.tsx` only puts the main parts of the page together: `Header`, `Hero`, `ProductsSection`,
+`Footer` and `CartDrawer`. It holds only the state that more than one part needs, and nothing
+else:
+
+- `products`: the product list and the cart both use them.
+- `cart`: the header count, "Add to cart" and the drawer all use it.
+- `showCart`: the header button and "Add to cart" open the drawer.
+
+Everything else lives in the part it belongs to:
+
+| Part              | Handles itself                                                              |
+| ----------------- | --------------------------------------------------------------------------- |
+| `ProductsSection` | loading, "Try again", reload when back online, the four states, the filters |
+| `CartDrawer`      | +, −, Remove, Clear cart, the stock check, the save warning                 |
+| `Header`          | the sign-up form, open or closed, and the welcome message                   |
+| `RegisterForm`    | its own field values                                                        |
+
+Before adding code to `App.tsx`, ask: does more than one part need this? If not, it goes in
+that part's component. A new part of the page gets its own component, and App only renders it.
+
 ## State
 
-- All shared state lives in `App` (`useState`): products, load status, error message, retry
-  counter, filters, cart, save warning, cart open, sign-up open, welcome name.
+- State lives in the lowest component that needs it. Move it up to `App` only when a second
+  part needs it.
 - Never store what can be computed: the matching products, the categories, the item count and
   the total are computed on every render.
-- The cart starts as `useState(getCart)`. Every change calls a `cart.state.ts` function and
-  stores what it returns: `updateCart(addItem(id))`. `updateCart` also sets `saveFailed`
-  from `didLastSaveFail()`.
-- Before `add` and `increase`, check the product is in stock with `findProductById`.
+- The cart starts as `useState(getCart)` in App. Every change calls a `cart.state.ts`
+  function and stores what it returns: `setCart(addItem(id))`. The drawer gets `setCart` as
+  `onCartChange` and does the same for +, −, Remove and Clear.
+- Before `add` and `increase`, check the product is in stock.
+- When a child calls a prop inside `useEffect` (like `onLoaded` in `ProductsSection`), the
+  prop must be in the effect's dependencies, so pass a `useState` setter: it never changes,
+  so the effect doesn't run again.
 
 ## Loading data and errors
 
-- The products load in one `useEffect` that depends on `attempt`. "Try again" sets
+- The products load in `ProductsSection`, in one `useEffect` that depends on `attempt`. "Try again" sets
   `status` to `"loading"` and adds 1 to `attempt`.
 - A second `useEffect` listens for the browser's `online` event. If the last load failed, it
   does the same as "Try again". Its cleanup removes the listener.
@@ -148,6 +174,12 @@ Each rule comes from a real mistake. The note under it says what happened.
    While simplifying the code, `style.css` was rewritten from scratch and the hero, gradient,
    card art and sidebar were lost. Only the code was meant to change. Keep the CSS and the
    class names, and check the page against a screenshot.
+
+10. **`App.tsx` never holds all the code.**
+    In the vanilla version, `main.ts` grew until it held every part of the app. The first
+    React `App.tsx` did the same: it loaded the products, kept the filters, handled every cart
+    button and the sign-up form. Now each part handles its own work, and `App.tsx` only puts
+    the parts together (see "App.tsx stays small").
 
 ## Commands
 
