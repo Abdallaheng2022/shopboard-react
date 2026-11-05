@@ -48,7 +48,7 @@ prop. Check the render method of CategoryChips.` The three category chips (Bags,
   card with `key="0"` gets a new product but keeps its old state, so the heart stays at
   that position.
 - **Fix:** Use the product's id as the key:
-  `<ProductCard key={product.id} product={product} onAdd={onAdd} />`
+  `<ProductCard key={product.name} product={product} onAdd={onAdd} />`
   Now the card, and its heart, move with their product when the order changes.
 
 ## Bug 4
