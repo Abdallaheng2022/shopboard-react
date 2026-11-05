@@ -31,8 +31,6 @@ reused unchanged, and React components replace the old DOM code.
 
 ## Getting started
 
-Requirements: Node.js 20.19+ or 22.12+, and Git.
-
 ```bash
 npm install
 npm run dev
