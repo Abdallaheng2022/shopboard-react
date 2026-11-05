@@ -329,6 +329,46 @@ unchanged:
 Use them when writing or reviewing components. The Next.js and server rules in
 `vercel-react-best-practices` don't apply here: this is a client-only Vite app.
 
+## Rules from mistakes made while building this project
+
+Each rule comes from a real mistake. The note under it says what happened.
+
+1. **`vite.config.ts` imports only `vite` and its plugins. Test settings go in
+   `vitest.config.ts`.**
+   It imported `defineConfig` from `vitest/config`, so `npm run dev` crashed with
+   `Cannot find package 'vitest'` before anything else could run.
+
+2. **Run every `npm` command from the project root, and check the result with
+   `npm ls <package>` before going on.**
+   `npm install` ran in the home folder instead of the project, so Vite was found in
+   `~/node_modules` and `react-router` was missing. A later half-finished install left a
+   broken `package-lock.json` (`Cannot read properties of null (reading 'edgesOut')`).
+   If an install fails: delete `node_modules` and `package-lock.json`, then install again.
+
+3. **Never call `setState` directly in an effect body.**
+   `ProductsProvider` set `"loading"` at the top of its load effect. oxlint flagged it
+   (`react(set-state-in-effect)`): it starts an extra render. The fix: `reload()` sets
+   `"loading"`, and the effect only starts the request.
+
+4. **Copy reused files; never rewrite them.**
+   The Day 3 `cart.state.ts` and `products.api.ts` were first rewritten as a reducer and a
+   new API client. The task allows no change except `import type`. Copy the file, then
+   build the React layer around it (`cart.store.ts`).
+
+5. **One component per file, and no name clashes.**
+   `Button.tsx` also held `ButtonLink`, and `ProductGrid.tsx` also held `GridFrame`. A type
+   called `CartLine` clashed with the `CartLine` component and needed `as` to import. Split
+   the files; rename the type (`CartEntry`).
+
+6. **Check documentation against the running app, not against memory.**
+   The README tree said `CartLine` has four buttons and forgot `disabled` on +. The
+   Components tab in React DevTools shows three buttons and every prop. Compare before
+   committing.
+
+7. **Never add a package version you haven't checked.**
+   Versions in `package.json` were guessed when the registry couldn't be reached. Run
+   `npm view <package> version` first.
+
 ## Before you finish
 
 - Run `npm run typecheck`, `npm run lint` and `npm test`. All must pass.
