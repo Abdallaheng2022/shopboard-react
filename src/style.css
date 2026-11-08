@@ -576,6 +576,18 @@ select {
   margin: 0;
 }
 
+/* The name links to the product page. It looks like the title, not like a blue link;
+   the underline shows only on hover and keyboard focus, so users still see it is a link. */
+.product-name a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.product-name a:hover,
+.product-name a:focus-visible {
+  text-decoration: underline;
+}
+
 .product-category {
   margin: 0;
   font-size: 0.75rem;
@@ -699,65 +711,6 @@ select {
   font-variant-numeric: tabular-nums;
 }
 
-/* Cart drawer: slides in from the right, over a dark layer */
-.drawer-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  display: flex;
-  justify-content: flex-end;
-  background: var(--backdrop);
-  backdrop-filter: blur(6px);
-}
-
-.cart-drawer {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space);
-  width: min(100%, 420px);
-  height: 100dvh;
-  padding: 24px;
-  overflow-y: auto;
-  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
-  color: var(--fg);
-  background: var(--surface);
-  box-shadow: var(--shadow-dialog);
-  animation: cart-slide-in 0.24s ease-out both;
-}
-
-@keyframes cart-slide-in {
-  from {
-    transform: translateX(100%);
-  }
-}
-
-.cart-drawer-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space);
-}
-
-.cart-drawer-title {
-  margin: 0;
-}
-
-/* The drawer is narrow on every screen, so each row stays stacked, on a tinted tile. */
-.cart-drawer .cart-list {
-  flex: 1;
-  align-content: start;
-  margin: 0;
-}
-
-.cart-drawer .cart-line {
-  grid-template-columns: 1fr;
-  background: var(--surface-2);
-}
-
-.cart-drawer .toast {
-  margin: 0;
-}
-
 /* Sign-up dialog */
 /* The dark, blurred layer behind the dialog. A click on it closes the dialog. */
 .overlay {
@@ -879,4 +832,20 @@ select {
     left: auto;
     width: 360px;
   }
+}
+
+/* Checkout form: the shadcn Field components inside, our button below. */
+.checkout-form {
+  display: grid;
+  gap: var(--space);
+  max-width: 480px;
+}
+
+.checkout-form .btn {
+  justify-self: start;
+}
+
+/* A field with an error gets a red border, so the error is seen, not only read. */
+input[aria-invalid="true"] {
+  border-color: var(--danger);
 }
