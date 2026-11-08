@@ -1,8 +1,18 @@
 // products.logic.ts: search, filter and sort. No DOM and no fetch here: data in, data out.
-import type { Filters, Product, SortOrder } from "./products.types";
+import type { Category, CategoryFilter, Filters, Product, SortOrder } from "./products.types";
 
-// The value of the "All categories" option of #category in index.html.
+// The value of the "All categories" option in ProductControls.
 export const ALL_CATEGORIES = "all";
+
+// Checks that a string (from the API) is one of the shop's categories.
+export function isCategory(value: string): value is Category {
+  return value === "Bags" || value === "Shoes" || value === "Accessories";
+}
+
+// Checks that a string from the category <select> is a category or "all".
+export function isCategoryFilter(value: string): value is CategoryFilter {
+  return value === ALL_CATEGORIES || isCategory(value);
+}
 
 // Checks that a string from the sort <select> is one of the allowed sort orders.
 export function isSortOrder(value: string): value is SortOrder {
@@ -10,20 +20,20 @@ export function isSortOrder(value: string): value is SortOrder {
 }
 
 // Keeps the products whose name contains the query. Upper or lower case doesn't matter.
-export function searchByName(list: readonly Product[], query: string): readonly Product[] {
+function searchByName(list: readonly Product[], query: string): readonly Product[] {
   const normalizedQuery = query.trim().toLowerCase();
   if (normalizedQuery === "") return list;
   return list.filter((product) => product.name.toLowerCase().includes(normalizedQuery));
 }
 
 // Keeps the products in one category, or all of them when "all" is picked.
-export function filterByCategory(list: readonly Product[], category: string): readonly Product[] {
+function filterByCategory(list: readonly Product[], category: CategoryFilter): readonly Product[] {
   if (category === ALL_CATEGORIES) return list;
   return list.filter((product) => product.category === category);
 }
 
 // Returns a sorted COPY. The original list never changes, so "default" brings back the first order.
-export function sortByPrice(list: readonly Product[], order: SortOrder): readonly Product[] {
+function sortByPrice(list: readonly Product[], order: SortOrder): readonly Product[] {
   if (order === "price-asc") return [...list].sort((a, b) => a.price - b.price);
   if (order === "price-desc") return [...list].sort((a, b) => b.price - a.price);
   return list;
@@ -37,7 +47,7 @@ export function applyFilters(list: readonly Product[], filters: Filters): readon
 }
 
 // Lists each category once, in the order it first appears.
-export function getCategories(list: readonly Product[]): string[] {
+export function getCategories(list: readonly Product[]): Category[] {
   return [...new Set(list.map((product) => product.category))];
 }
 

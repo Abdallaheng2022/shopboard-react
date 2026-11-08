@@ -1,10 +1,10 @@
 // ProductControls.tsx: the search box, and the category and sort selects.
-import { ALL_CATEGORIES, isSortOrder } from "../modules/products/products.logic";
-import type { Filters } from "../modules/products/products.types";
+import { ALL_CATEGORIES, isCategoryFilter, isSortOrder } from "../products.logic";
+import type { Category, Filters } from "../products.types";
 
 interface ProductControlsProps {
   filters: Filters;
-  categories: readonly string[];
+  categories: readonly Category[];
   // Turned off while loading, on error, and when the store is empty.
   disabled: boolean;
   onChange: (filters: Filters) => void;
@@ -30,7 +30,10 @@ export function ProductControls({ filters, categories, disabled, onChange }: Pro
           id="category"
           value={filters.category}
           disabled={disabled}
-          onChange={(event) => onChange({ ...filters, category: event.target.value })}
+          onChange={(event) => {
+            const category = event.target.value;
+            if (isCategoryFilter(category)) onChange({ ...filters, category });
+          }}
         >
           <option value={ALL_CATEGORIES}>All categories</option>
           {categories.map((category) => (
