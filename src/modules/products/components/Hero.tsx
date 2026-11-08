@@ -1,4 +1,4 @@
-// Hero.tsx: the big title at the top of the page, with a link down to the products.
+// Hero.tsx: the big title at the top of the home page, with a link down to the products.
 export function Hero() {
   return (
     <section className="hero" aria-labelledby="hero-title">

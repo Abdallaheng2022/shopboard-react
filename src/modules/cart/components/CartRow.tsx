@@ -1,15 +1,18 @@
 // CartRow.tsx: one cart row: name, category, price × quantity, then − quantity + and Remove.
-import type { CartAction, CartItem } from "../modules/cart/cart.types";
-import type { Product } from "../modules/products/products.types";
-import { formatPrice } from "../shared/ui/format";
+import { memo } from "react";
+import type { CartAction, CartItem } from "../cart.types";
+import type { Product } from "../../products/products.types";
+import { formatPrice } from "../../../shared/ui/format";
 
 interface CartRowProps {
   item: CartItem;
   product: Product;
-  onAction: (action: CartAction, productId: number) => void;
+  onAction: (action: CartAction, product: Product) => void;
 }
 
-export function CartRow({ item, product, onAction }: CartRowProps) {
+// memo: in a long cart, a click on one line re-renders CartContent; the other lines get the
+// same `item`, `product` and `onAction`, so they are skipped.
+export const CartRow = memo(function CartRow({ item, product, onAction }: CartRowProps) {
   return (
     <li className="cart-line">
       <div>
@@ -25,7 +28,7 @@ export function CartRow({ item, product, onAction }: CartRowProps) {
           type="button"
           className="btn btn-secondary"
           aria-label={`Decrease quantity of ${product.name}`}
-          onClick={() => onAction("decrease", product.id)}
+          onClick={() => onAction("decrease", product)}
         >
           −
         </button>
@@ -35,7 +38,7 @@ export function CartRow({ item, product, onAction }: CartRowProps) {
           className="btn btn-secondary"
           aria-label={`Increase quantity of ${product.name}`}
           disabled={!product.inStock}
-          onClick={() => onAction("increase", product.id)}
+          onClick={() => onAction("increase", product)}
         >
           +
         </button>
@@ -43,11 +46,11 @@ export function CartRow({ item, product, onAction }: CartRowProps) {
           type="button"
           className="btn btn-secondary"
           aria-label={`Remove ${product.name} from cart`}
-          onClick={() => onAction("remove", product.id)}
+          onClick={() => onAction("remove", product)}
         >
           Remove
         </button>
       </div>
     </li>
   );
-}
+});

@@ -1,14 +1,16 @@
-// Header.tsx: the logo, the "Shop" link, the cart button, and sign-up.
+// Header.tsx: the logo, the "Shop" link, the cart link with its count, and sign-up.
 // It owns the sign-up form: whether it is open, and the welcome message after it.
+// The item count comes from the shared cart.
 import { useState } from "react";
-import { RegisterForm } from "./RegisterForm";
+import { Link, NavLink } from "react-router";
+import { RegisterForm } from "../../modules/auth/components/RegisterForm";
+import { useCart } from "../../modules/cart/cart.context";
+import { getItemCount } from "../../modules/cart/cart.logic";
 
-interface HeaderProps {
-  itemCount: number;
-  onOpenCart: () => void;
-}
-
-export function Header({ itemCount, onOpenCart }: HeaderProps) {
+export function Header() {
+  const cart = useCart();
+  // Computed from the cart on every render, never stored.
+  const itemCount = getItemCount(cart);
   const [showRegister, setShowRegister] = useState(false);
   // The name of the user who just signed up, for the welcome message. Empty until then.
   const [welcomeName, setWelcomeName] = useState("");
@@ -21,15 +23,15 @@ export function Header({ itemCount, onOpenCart }: HeaderProps) {
   return (
     <>
       <header className="site-header">
-        <a className="logo" href="/">
+        <Link className="logo" to="/">
           ShopBoard
-        </a>
+        </Link>
         <nav aria-label="Main">
           <ul className="nav-list">
             <li>
-              <a className="nav-link" href="#products">
+              <NavLink className="nav-link" to="/" end>
                 Shop
-              </a>
+              </NavLink>
             </li>
             <li>
               <button type="button" className="btn btn-ghost" onClick={() => setShowRegister(true)}>
@@ -38,12 +40,7 @@ export function Header({ itemCount, onOpenCart }: HeaderProps) {
             </li>
           </ul>
         </nav>
-        <button
-          type="button"
-          className="cart-badge"
-          aria-label={`Open cart, ${itemCount} items`}
-          onClick={onOpenCart}
-        >
+        <Link className="cart-badge" to="/cart" aria-label={`Open cart, ${itemCount} items`}>
           <svg
             viewBox="0 0 24 24"
             width="24"
@@ -62,7 +59,7 @@ export function Header({ itemCount, onOpenCart }: HeaderProps) {
           <span className="cart-badge-count" aria-hidden="true">
             {itemCount}
           </span>
-        </button>
+        </Link>
       </header>
       {showRegister && (
         <RegisterForm onRegister={handleRegister} onClose={() => setShowRegister(false)} />

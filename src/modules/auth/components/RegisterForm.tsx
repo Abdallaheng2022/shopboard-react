@@ -1,7 +1,8 @@
 // RegisterForm.tsx: the sign-up form, shown over the page when the user clicks "Sign up".
 // The browser checks the fields (required, email, 8+ characters) before onSubmit runs.
-// No sign-up endpoint exists yet, so submitting only tells App the user's name.
+// No sign-up endpoint exists yet, so submitting only tells Header the user's name.
 import { useState, type FormEvent } from "react";
+import { Overlay } from "../../../components/ui/Overlay";
 
 // The shortest password the form accepts.
 const MIN_PASSWORD_LENGTH = 8;
@@ -25,12 +26,7 @@ export function RegisterForm({ onRegister, onClose }: RegisterFormProps) {
 
   return (
     // A click on the dark layer itself (not on the dialog) closes the form.
-    <div
-      className="overlay"
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
+    <Overlay className="overlay" onClose={onClose}>
       <section className="dialog" role="dialog" aria-modal="true" aria-labelledby="register-title">
         <div className="dialog-content">
           <div className="dialog-header">
@@ -101,6 +97,6 @@ export function RegisterForm({ onRegister, onClose }: RegisterFormProps) {
           </form>
         </div>
       </section>
-    </div>
+    </Overlay>
   );
 }

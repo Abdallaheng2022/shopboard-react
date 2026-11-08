@@ -1,51 +1,27 @@
-// App.tsx: puts the page together. It holds only what more than one part needs: the products
-// (the product list and the cart both use them), the cart (the header count, "Add to cart" and
-// the drawer), and whether the cart drawer is open. Each part handles the rest itself.
-import { useState } from "react";
-import { CartDrawer } from "./components/CartDrawer";
-import { Footer } from "./components/Footer";
-import { Header } from "./components/Header";
-import { Hero } from "./components/Hero";
-import { ProductsSection } from "./components/ProductsSection";
-import { getItemCount } from "./modules/cart/cart.logic";
-import { addItem, getCart } from "./modules/cart/cart.state";
-import type { Cart } from "./modules/cart/cart.types";
-import type { Product } from "./modules/products/products.types";
+// App.tsx: the map of the app: which URL shows which page. Every page is loaded with lazy(),
+// so its code downloads only when someone opens it. RootLayout is around every page.
+import { lazy } from "react";
+import { Route, Routes } from "react-router";
+import { RootLayout } from "./components/layout/RootLayout";
+
+const HomePage = lazy(() => import("./modules/products/pages/HomePage"));
+const ProductPage = lazy(() => import("./modules/products/pages/ProductPage"));
+const CartPage = lazy(() => import("./modules/cart/pages/CartPage"));
+const CheckoutPage = lazy(() => import("./modules/checkout/pages/CheckoutPage"));
+const OrderSuccessPage = lazy(() => import("./modules/checkout/pages/OrderSuccessPage"));
+const NotFoundPage = lazy(() => import("./components/layout/NotFoundPage"));
 
 export function App() {
-  const [products, setProducts] = useState<readonly Product[]>([]);
-  // The cart starts as the one saved in localStorage.
-  const [cart, setCart] = useState<Cart>(getCart);
-  const [showCart, setShowCart] = useState(false);
-
-  function handleAdd(product: Product): void {
-    if (!product.inStock) return;
-    setCart(addItem(product.id));
-    // Open the cart so the user sees the product was added.
-    setShowCart(true);
-  }
-
   return (
-    <>
-      <Header itemCount={getItemCount(cart)} onOpenCart={() => setShowCart(true)} />
-      <main className="site-main">
-        <Hero />
-        <ProductsSection
-          products={products}
-          onLoaded={setProducts}
-          onCartChange={setCart}
-          onAdd={handleAdd}
-        />
-      </main>
-      <Footer />
-      {showCart && (
-        <CartDrawer
-          cart={cart}
-          products={products}
-          onCartChange={setCart}
-          onClose={() => setShowCart(false)}
-        />
-      )}
-    </>
+    <Routes>
+      <Route element={<RootLayout />}>
+        <Route index element={<HomePage />} />
+        <Route path="products/:id" element={<ProductPage />} />
+        <Route path="cart" element={<CartPage />} />
+        <Route path="checkout" element={<CheckoutPage />} />
+        <Route path="checkout/success" element={<OrderSuccessPage />} />
+        <Route path="*" element={<NotFoundPage />} />
+      </Route>
+    </Routes>
   );
 }
