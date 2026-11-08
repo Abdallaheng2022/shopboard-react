@@ -1,7 +1,7 @@
 // errors.ts: the error type every request throws, and the message the user sees for it.
 
 // What went wrong with a request.
-export type ApiErrorKind = "offline" | "network" | "timeout" | "http" | "invalid-response";
+type ApiErrorKind = "offline" | "network" | "timeout" | "http" | "invalid-response";
 
 // An error from a request. `kind` says what failed; `status` is set only for HTTP errors.
 export class ApiError extends Error {
