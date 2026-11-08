@@ -1,135 +1,361 @@
 # ShopBoard (React)
 
-The React version of ShopBoard. It reuses the vanilla TypeScript files for types, API, logic and
-cart state, unchanged, and replaces the old `*.ui.ts` DOM code with React components.
+The React version of ShopBoard: a small shop with five pages and a 404 page, one shared cart that survives a
+refresh, and a validated checkout. Every rule below describes the code as it is now. The
+section "Rules from mistakes" says where each hard rule came from.
 
 ## Stack
 
-- Vite, React 19, TypeScript with `"strict": true`
-- One CSS file: `src/style.css`, with CSS custom properties
+- Vite 8, React 19, TypeScript 7 with `"strict": true`
+- React Router 8 (`<BrowserRouter>` + `<Routes>`), `react-error-boundary`
+- react-hook-form, Zod and `@hookform/resolvers` for the checkout form
+- shadcn/ui (Radix, style "Vega") for the checkout fields only, with Tailwind CSS 4 only for
+  those components
+- Our design: one CSS file, `src/style.css`, with CSS custom properties
 - oxlint, Prettier, husky and lint-staged
 
-## Keep it simple
+## What the code may use
 
-Use only what the course covered: components, props, `useState`, `useEffect`, lists with
-`.map()` and `key`, and events. No React Router, no Context, no `useReducer`, no `useMemo` or
-`useCallback`, no custom hooks, no state or data-fetching library. If something seems to need
-more, ask first.
+The Day 1–5 course: components, props, `useState`, `useEffect`, lists with `.map()` and
+`key`, events, React Router, one Context (the cart), `lazy`, `Suspense`, `use()`, Error
+Boundaries, react-hook-form, Zod and shadcn/ui.
 
-## Reused files: copied, never edited
+- No `useReducer`, no state library (Zustand, Redux), no data-fetching library.
+- `memo`, `useCallback` and `useMemo` only where a MEASURED problem needs them (slides 38–40).
+  Each one in this app is listed, with its reason and its numbers, in "Performance".
+  `useCallback` alone does nothing; it helps only a child wrapped in `memo`.
+- If something seems to need more, ask first.
 
-These files are copied from the vanilla repo byte for byte. The only change ever allowed is
-turning an import into `import type`. To fix one, fix it in the vanilla repo, then copy it
-again.
+## No AI slop
 
-| File                                 | What it does                                             |
-| ------------------------------------ | -------------------------------------------------------- |
-| `modules/products/products.types.ts` | `Product`, `SortOrder`, `Filters`                        |
-| `modules/products/products.api.ts`   | `fetchProducts()`: GET, type guard, API → `Product`      |
-| `modules/products/products.logic.ts` | search, filter, sort, `getCategories`, `findProductById` |
-| `modules/cart/cart.types.ts`         | `CartItem`, `Cart`, `CartAction`                         |
-| `modules/cart/cart.state.ts`         | the cart, saved in localStorage inside try/catch         |
-| `modules/cart/cart.logic.ts`         | `getItemCount`, `getTotal`                               |
-| `shared/api/client.ts`               | `getJson(url)`: the only `fetch`                         |
-| `shared/api/errors.ts`               | `ApiError`, `getErrorMessage`                            |
-| `shared/ui/format.ts`                | `formatPrice`                                            |
+The agent can write the code; the student must understand it and explain any line (slide 3:
+"Can't explain a line? Delete it.").
 
-They keep their vanilla paths, so their relative imports work unchanged. Some of their comments
-still mention `index.html` or `*.ui.ts`; they stay as they are. React code imports these
-functions; it never copies their logic.
+- No AI chat logs, no plan or notes files, no leftover or unused files, no code nobody asked
+  for. Only what the project needs.
+- Every hook, every piece of state and every effect has a reason you can say in one sentence,
+  and sits in the right place. If there is no reason, remove it.
+- After every change, say what changed, where, and why (in the commit message).
 
 ## Structure
 
-- `src/main.tsx`: mounts `<App />` in `StrictMode`. Nothing else.
-- `src/App.tsx`: puts the page together. It holds only the state more than one part needs.
-- `src/components/`: one component per file. Each part of the page handles its own work.
-- `src/style.css`: all styles, with plain class names: design tokens first, then base styles,
-  then one block per component.
+```
+src/
+├── main.tsx                      # StrictMode → BrowserRouter → CartProvider → App
+├── App.tsx                       # The routes only; every page is lazy()
+├── style.css                     # Our design. Not in any @layer, so it always wins
+├── shadcn.css                    # Tailwind theme + utilities (no Preflight) for shadcn
+├── vite-env.d.ts                 # Types for the .env variables
+├── components/                   # General components: no module owns them
+│   ├── layout/                   # The page frame
+│   │   ├── RootLayout.tsx        # Header + <Suspense><Outlet/></Suspense> + Footer
+│   │   ├── Header.tsx
+│   │   ├── Footer.tsx
+│   │   └── NotFoundPage.tsx      # path="*"
+│   ├── ui/                       # Our building blocks any module can use
+│   │   ├── LoadBoundary.tsx      # ErrorBoundary + Suspense in one
+│   │   ├── LoadError.tsx         # The error fallback with "Try again"
+│   │   ├── Overlay.tsx
+│   │   └── StatusMessage.tsx
+│   └── shadcn/                   # Generated by the shadcn CLI. Not ours: not linted
+│       ├── field.tsx · input.tsx · label.tsx · separator.tsx
+├── lib/utils.ts                  # Generated by `shadcn init`; see "shadcn/ui"
+├── modules/                      # One folder per feature
+│   ├── products/
+│   │   ├── products.types.ts · products.api.ts · products.logic.ts
+│   │   ├── products.cache.ts     # One promise per request, for use()
+│   │   ├── products.state.ts     # INITIAL_FILTERS, getProductsView()
+│   │   ├── components/
+│   │   │   ├── Hero.tsx · ProductsSection.tsx · ProductControls.tsx
+│   │   │   ├── ProductsContent.tsx · ProductCard.tsx · ProductsSkeleton.tsx
+│   │   │   └── ProductDetails.tsx
+│   │   └── pages/
+│   │       ├── HomePage.tsx      # "/"
+│   │       └── ProductPage.tsx   # "/products/:id"
+│   ├── cart/
+│   │   ├── cart.types.ts · cart.logic.ts
+│   │   ├── cart.storage.ts       # loadCart(), saveCart(): the only localStorage
+│   │   ├── cart.context.ts       # CartContext + useCart(), CartActionsContext + useCartActions()
+│   │   ├── components/
+│   │   │   ├── CartProvider.tsx  # The one owner of the cart
+│   │   │   ├── CartContent.tsx
+│   │   │   └── CartRow.tsx
+│   │   └── pages/CartPage.tsx    # "/cart"
+│   ├── checkout/
+│   │   ├── checkout.schema.ts    # Every form rule, in one Zod schema
+│   │   ├── components/CheckoutForm.tsx
+│   │   └── pages/
+│   │       ├── CheckoutPage.tsx      # "/checkout"
+│   │       └── OrderSuccessPage.tsx  # "/checkout/success"
+│   └── auth/
+│       └── components/RegisterForm.tsx
+└── shared/
+    ├── api/config.ts             # API_BASE_URL: the only server address
+    ├── api/client.ts             # getJson(path): the only fetch
+    ├── api/errors.ts             # ApiError, getErrorMessage()
+    └── ui/format.ts              # formatPrice()
+```
+
+## Where a file goes
+
+Ask one question: **does it belong to one feature?**
+
+- **Yes:** `modules/<feature>/`. A page goes in `pages/`, a component in `components/`.
+- **No, it's the page frame:** `components/layout/` (and `NotFoundPage`, which no feature owns).
+- **No, any feature could use it:** `components/ui/`. A `ui` component knows nothing about
+  products, the cart or sign-up. It gets everything through props and `children`.
+- **Generated by the shadcn CLI:** `components/shadcn/`, never next to our files.
+
+## Fewer files, but no spaghetti
+
+- **Make a new component** when the piece is used in two places, or when it takes a clear job
+  out of a component that does too much.
+- **Don't make a component** for a few lines of JSX used once. Leave them in the parent.
+- **Don't make a `.ts` file** for a constant or helper used in one component. Move it out only
+  when a second file needs it.
+- **Keep a file to one job.** A `switch` with one `case` per screen is fine; a long chain of
+  `&&` conditions is not.
+- **No `index.ts` barrel files,** and no empty files made only to complete a pattern.
+
+## Modules
+
+- **File names:** `<module>.<role>.ts`, and the module name is the folder name
+  (`products.api.ts`, not `product.api.ts`).
+- **A module has only the files it needs.** `cart` has no `.api.ts`; `auth` has only its form.
+
+| File               | Holds                                                           | Never holds                       |
+| ------------------ | --------------------------------------------------------------- | --------------------------------- |
+| `<m>.types.ts`     | Types and interfaces                                            | Values, functions                 |
+| `<m>.api.ts`       | Endpoint paths, the API's raw shape, type guards, API → app     | `fetch`, React, UI texts          |
+| `<m>.logic.ts`     | Pure functions: data in, data out (a new array, never a change) | React, DOM, `fetch`, localStorage |
+| `<m>.state.ts`     | First values of state, and functions that read it               | React, JSX                        |
+| `<m>.cache.ts`     | One promise per request, and its reset                          | React, JSX                        |
+| `<m>.storage.ts`   | Reading and writing localStorage, inside try/catch              | React, JSX                        |
+| `<m>.context.ts`   | The context's value type, the context, its `use…()` hook        | JSX, components, state            |
+| `<m>.schema.ts`    | A Zod schema and the type made from it                          | React, JSX                        |
+| `components/*.tsx` | One component and its `Props` interface                         | `fetch`, raw `localStorage`       |
+| `pages/*.tsx`      | One page, `export default` (for `lazy()`)                       | `fetch`, raw `localStorage`       |
+
+A module's `.ts` files never import React. The one exception is `<m>.context.ts`, which needs
+`createContext` and `useContext`.
+
+### Imports go one way
+
+`App.tsx` → `components/layout/` → `modules/*` → `components/ui/` and `components/shadcn/`,
+and the module's `.ts` files → `shared/`.
+
+- `components/ui/` and `shared/` never import from `modules/` or `components/layout/`.
+- A module may use another module's types, logic, cache and context (`useCart()`,
+  `useCartActions()`), but never
+  its components.
+- A module never imports from `components/layout/`.
+
+## API client
+
+- `shared/api/config.ts` is the only file with the server address. `API_BASE_URL` is read from
+  `VITE_API_BASE_URL` (typed in `src/vite-env.d.ts`, documented in `.env.example`); when it is
+  missing or empty, the default is `https://shopboard-api.vercel.app/api`. A `/` at the end is
+  removed.
+- `.env` is in `.gitignore`; `.env.example` is committed. A `VITE_` value ends up in the
+  browser bundle: never put a secret there.
+- `getJson(path)` takes a path that starts with `/` (it throws otherwise) and adds
+  `API_BASE_URL` to it.
+- Each endpoint is a named path in its module's `.api.ts` (`PRODUCTS_PATH = "/products"`).
+- Only `client.ts` calls `fetch`. Only `*.api.ts` files call `getJson`. Only `*.cache.ts` files
+  call the API functions. Components read the cache with `use()`.
 
 ## Components
 
-- One component per file. The file name matches the component. Named exports only, no
-  `export default`.
+- One component per file. The file name matches the component.
+- Named exports only, except pages: a page is `export default`, because `lazy()` needs it.
 - Props are an `interface <Component>Props` in the same file, above the component.
-- Small components (`ProductCard`, `CartRow`, `ProductControls`, `StatusMessage`) hold no
-  state. They show their props and call a callback prop (`onAdd`, `onAction`, `onChange`)
-  when the user clicks or types. The parts of the page (`ProductsSection`, `CartDrawer`,
-  `Header`) hold their own state and logic; see "App.tsx stays small".
-- Lists use a `key` from the data: `product.id`, `item.productId`, the category name. Never the
-  index, never `Math.random()`.
-- Conditions in JSX use real booleans: `cart.length === 0 && …`, never `cart.length && …`
-  (a `0` would show on the page).
-- Never change a prop or state value in place (`item.quantity++`, `products.sort()`). Make a new
-  value. The reused files already return a new cart or a sorted copy.
+- Small components (`ProductControls`, `ProductsContent`, `CartRow`, `StatusMessage`,
+  `Overlay`) hold no state. They show their props and call a callback prop (`onChange`,
+  `onAction`, `onClose`).
+- For a wrapper, pass the inside as `children` (`<Overlay>`, `<LoadBoundary>`).
+- Lists use a `key` from the data: `product.id`, `item.productId`, the category name, the
+  field `name`. Never the index, never `Math.random()`.
+- Conditions in JSX use real booleans: `cart.length === 0 && …`, never `cart.length && …`.
+- Links are `<Link>` or `<NavLink>` from React Router, never `<a href>` (a full reload loses
+  the app). `<Link>` renders a real `<a>`: if it looks wrong, fix the CSS, not the element.
 
-## App.tsx stays small
+## Routes
 
-`App.tsx` only puts the main parts of the page together: `Header`, `Hero`, `ProductsSection`,
-`Footer` and `CartDrawer`. It holds only the state that more than one part needs, and nothing
-else:
+| URL                 | Page               | File                                          |
+| ------------------- | ------------------ | --------------------------------------------- |
+| `/`                 | `HomePage`         | `modules/products/pages/HomePage.tsx`         |
+| `/products/:id`     | `ProductPage`      | `modules/products/pages/ProductPage.tsx`      |
+| `/cart`             | `CartPage`         | `modules/cart/pages/CartPage.tsx`             |
+| `/checkout`         | `CheckoutPage`     | `modules/checkout/pages/CheckoutPage.tsx`     |
+| `/checkout/success` | `OrderSuccessPage` | `modules/checkout/pages/OrderSuccessPage.tsx` |
+| `*`                 | `NotFoundPage`     | `components/layout/NotFoundPage.tsx`          |
 
-- `products`: the product list and the cart both use them.
-- `cart`: the header count, "Add to cart" and the drawer all use it.
-- `showCart`: the header button and "Add to cart" open the drawer.
-
-Everything else lives in the part it belongs to:
-
-| Part              | Handles itself                                                              |
-| ----------------- | --------------------------------------------------------------------------- |
-| `ProductsSection` | loading, "Try again", reload when back online, the four states, the filters |
-| `CartDrawer`      | +, −, Remove, Clear cart, the stock check, the save warning                 |
-| `Header`          | the sign-up form, open or closed, and the welcome message                   |
-| `RegisterForm`    | its own field values                                                        |
-
-Before adding code to `App.tsx`, ask: does more than one part need this? If not, it goes in
-that part's component. A new part of the page gets its own component, and App only renders it.
+- `App.tsx` holds only the routes. The route without a `path` renders `RootLayout` around
+  every page.
+- Every page is `lazy(() => import(...))`. One `<Suspense>` around `<Outlet />` in
+  `RootLayout` shows "Loading page…" while a page's code downloads; the header stays.
+- `useParams()` returns a string. `ProductPage` turns it into a number and checks it before
+  using it.
+- Navigation state (`useLocation().state`) can be anything, or nothing when the URL is opened
+  directly. `OrderSuccessPage` checks it with a type guard before reading the name.
 
 ## State
 
-- State lives in the lowest component that needs it. Move it up to `App` only when a second
-  part needs it.
-- Never store what can be computed: the matching products, the categories, the item count and
-  the total are computed on every render.
-- The cart starts as `useState(getCart)` in App. Every change calls a `cart.state.ts`
-  function and stores what it returns: `setCart(addItem(id))`. The drawer gets `setCart` as
-  `onCartChange` and does the same for +, −, Remove and Clear.
-- Before `add` and `increase`, check the product is in stock.
-- When a child calls a prop inside `useEffect` (like `onLoaded` in `ProductsSection`), the
-  prop must be in the effect's dependencies, so pass a `useState` setter: it never changes,
-  so the effect doesn't run again.
+- **Who owns a piece of state (slide 8):** find every component that reads it, go up to their
+  closest common parent: that one owns it. Data goes down as props; events come up as
+  callbacks. Only the owner changes the data.
+- **Every piece of state has one owner and one copy.** Anything that can be computed (the
+  filtered products, the categories, the item count, the total) is computed in the render.
+- **State that one component needs stays in that component:** `filters` in
+  `ProductsSection`, `showRegister` and `welcomeName` in `Header`, the sign-up fields in
+  `RegisterForm`.
+- **The URL is state too.** The order's thank-you is a page (`/checkout/success`), not a
+  `useState` in `CheckoutPage`: a refresh keeps it, and "Back" doesn't bring back the form.
+- **The cart has one owner: `CartProvider`.** `useState<Cart>(loadCart)` (no `()`: React calls
+  it once). React owns the cart; nothing keeps a copy outside React.
+- **Why Context and not Zustand:** the store shares one value and a few actions. Context is
+  part of React and adds no package. Zustand helps when many components re-render too often;
+  this app has a few.
+- **Two contexts, one owner.** `CartProvider` fills `CartContext` (the lines, `useCart()`) and
+  `CartActionsContext` (the actions, `useCartActions()`). The actions are made once
+  (`useMemo(…, [])`) and never change, so a component that only changes the cart (every
+  `ProductCard`) doesn't re-render when the cart changes. Read only what you need.
+- **Components change the cart only through `useCartActions()`:** `add`, `increase`,
+  `decrease`, `remove`, `clear`. `add` and `increase` take the product and check `inStock`.
+  The actions use only `setCart` and the updater form, so they never need dependencies.
+- **Every action uses the updater form and a pure function:**
+  `setCart((current) => addItem(current, id))`. The function returns a NEW array. Never
+  `push`, `splice`, `sort` or `item.quantity++` on state: React compares with `Object.is`, so
+  the same array means no re-render.
+- **A component that needs the cart calls `useCart()` or `useCartActions()` itself.** Never
+  pass the cart or its actions through a component that doesn't use them.
+
+## Performance (a problem created, measured and solved)
+
+The problem: with 5,000 products and a 300-line cart, every change re-rendered everything.
+How it was measured: during development, a temporary fake API (not kept in the repo; the app
+always uses the real API and its 12 products) served 5,000 products to the production build;
+Chrome repeated each action 7 times; the table shows the MEDIAN (one slow run can't move it).
+Render counts are per action.
+
+| Action                             | Before                              | After    |
+| ---------------------------------- | ----------------------------------- | -------- |
+| type one letter in search          | 140 ms, 5,000 `ProductCard` renders | 35 ms, 0 |
+| "Add to cart" on one product       | 119 ms, 5,000 `ProductCard` renders | 24 ms, 0 |
+| `+` on one line of a 300-line cart | 13 ms, 300 `CartRow` renders        | 14 ms, 1 |
+
+The cart line's time didn't change (a row is cheap, and the difference is inside the noise);
+its render count went from 300 to 1, which matters as rows grow.
+
+What solved it, and why each one is needed:
+
+| Where                             | What                                      | Why                                                                                                               |
+| --------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `ProductCard`                     | `memo`                                    | typing re-renders `ProductsSection`; a card whose `product` is the same object is skipped                         |
+| `cart.context.ts`, `CartProvider` | two contexts; actions in `useMemo(…, [])` | a context change re-renders its readers through `memo`. Cards read only the actions, which never change           |
+| `CartRow`                         | `memo`                                    | a click on one line re-renders `CartContent`; the other lines get the same props                                  |
+| `CartContent`                     | `useCallback` on `handleAction`           | `CartRow` is `memo`, so `onAction` must stay the same function (slide 37's trap); its deps are the stable actions |
+| `ProductsSection`                 | `useMemo` on `getCategories(products)`    | depends on `products` only; typing changes `filters`, so the loop over all products is skipped                    |
+| `ProductsSection`                 | NO `useMemo` on `applyFilters`            | it renders only when `filters` changes, and then the filter must run anyway: it would never skip                  |
+
+- Keep the chain whole: `memo` child ← same props ← `useCallback` ← stable deps ← actions that
+  use only `setCart` and the updater form. One new function or object anywhere breaks it.
+- `memo` and `useMemo` are for speed, never for correctness: React may drop a saved value.
+- Measure with the production build (`npm run build` + `npx vite preview`): in development,
+  StrictMode renders twice.
+- One run is not a measurement: the same code gave 228 ms and 433 ms. Repeat and use the median.
+
+## Effects
+
+An effect is only for keeping a component in sync with something outside React. There are
+two:
+
+| Effect             | Where          | Outside React | Dependencies                           |
+| ------------------ | -------------- | ------------- | -------------------------------------- |
+| `saveCart(cart)`   | `CartProvider` | localStorage  | `[cart]`                               |
+| listen to `online` | `LoadError`    | the browser   | `[resetErrorBoundary]`, with a cleanup |
+
+- No effect loads data, calculates a value, or reacts to a click (slide 28): calculate in the
+  render; put "after a click" code in the event handler; to reset a form when a value
+  changes, give it a `key`.
+- You started it? You stop it: an effect that subscribes, listens or starts a timer returns a
+  cleanup. A fetch inside an effect would need an `AbortController` and `abort()` in the
+  cleanup (slide 29); this app has none, because data loads through `use()`.
+- StrictMode stays on. If an effect breaks when it runs twice in development, fix the cleanup;
+  never remove StrictMode (slide 30).
+- Never call `setState` directly in an effect body.
 
 ## Loading data and errors
 
-- The products load in `ProductsSection`, in one `useEffect` that depends on `attempt`. "Try again" sets
-  `status` to `"loading"` and adds 1 to `attempt`.
-- A second `useEffect` listens for the browser's `online` event. If the last load failed, it
-  does the same as "Try again". Its cleanup removes the listener.
-- The effect uses an `ignore` flag set in its cleanup, so an old answer never overwrites the
-  state. In development `StrictMode` runs the effect twice; the first answer is ignored.
-- Never call `setState` directly in the effect body. Set state only inside `.then()` and
-  `.catch()`, or in event handlers.
-- Every request goes through `getJson` (inside `fetchProducts`). Never call `fetch` anywhere
-  else.
-- The user never sees a raw error: show `getErrorMessage(error)` and send the details to
-  `console.error`.
-- Every state has its own message: loading, error with "Try again", empty store, and no
-  search results.
-- After the products load, drop saved cart lines for products the store no longer has
-  (`removeUnknownItems`).
+- A component reads data with `use(getProducts())` or `use(getProduct(id))`. It suspends until
+  the data arrives, and a failed request throws to the nearest Error Boundary.
+- `products.cache.ts` keeps ONE promise per request. Without it, every render would start a
+  new request and Suspense would wait forever. `resetProducts()` / `resetProduct()` forget a
+  failed one.
+- Every part that loads data is inside its own `<LoadBoundary>`:
+  `fallback` while loading, `LoadError` with "Try again" on failure (`onReset` first forgets
+  the failed promise), and `resetKeys={[productId]}` on the product page. A slow or broken
+  part never blocks or breaks the rest of the page. Without a boundary, React removes the
+  whole app.
+- Empty and no-match are not errors: `ProductsContent` shows them (`getProductsView()`).
+- `fetchProduct(id)` returns `null` on a 404, and `ProductDetails` shows "We couldn't find
+  this product".
+- The user never sees a raw error: `LoadError` shows `getErrorMessage(error)`; the boundary's
+  `onError` sends the details to `console.error`.
+
+## The checkout form
+
+- Every rule and message is in `checkoutSchema`. The form's type is `z.infer` of it.
+- `useForm` with `zodResolver(checkoutSchema)`, `defaultValues`, and `mode: "onTouched"` (no red
+  on the first letter).
+- Each input: react-hook-form's `<Controller>` + shadcn's `<Field>`, `<FieldLabel>`,
+  `<Input {...field} aria-invalid>`, `<FieldError>` (slide 50). `{...field}` passes the `ref`,
+  so `handleSubmit` focuses the first wrong field.
+- `<form noValidate>`: our messages, not the browser's.
+- A good form (slide 51): every input has a label; the error sits under its field, in words;
+  no red while typing the first letter; focus jumps to the first error; the button is
+  disabled while sending (`isSubmitting`); an error never clears what the user typed.
+- Use shadcn's `Field` components. `<FormField>` is the older way (slide 50); don't add it.
+- An empty cart can't check out. Placing the order calls `clear()`, then
+  `navigate("/checkout/success", { replace: true, state: { name } })`. `replace`: "Back" from
+  the thank-you skips the checkout page.
+
+## Styling
+
+- **`style.css` is the design, and it never changes when code changes.** Design tokens first,
+  then base styles, then one block per component. Never rewrite it; add a small block when a
+  new component needs one.
+- `style.css` is not in any `@layer`. CSS outside layers beats CSS inside layers, so our
+  design always wins over Tailwind.
+- `shadcn.css` is imported BEFORE `style.css` in `main.tsx`, so where both define a variable
+  with the same name (`--border`, `--accent`), ours wins.
+- `shadcn.css` imports only `tailwindcss/theme.css` and `tailwindcss/utilities.css`, each in a
+  layer. Never `@import "tailwindcss"` (it brings Preflight, which resets the whole page) and
+  never an `@layer base` block.
+- One font: Inter from Google Fonts (`index.html`). shadcn's `--font-sans` points to our
+  `--font-body`.
+
+## shadcn/ui
+
+- The components in `components/shadcn/` are generated. Don't edit them; add new ones with
+  `npx shadcn@latest add <name>`.
+- `components.json` has `"ui": "@/components/shadcn"`. Change it before any `add`, never after.
+- `@/` means `src/`: `paths` in both `tsconfig.json` (the CLI reads this one) and
+  `tsconfig.app.json`, and `resolve.alias` in `vite.config.ts`.
+- `components/shadcn/` is in oxlint's `ignorePatterns`: our lint rules are for our code.
+- This shadcn version imports `cn` from the `cn` package. `src/lib/utils.ts` (generated by
+  `init`) is kept because `components.json` points `"utils"` at it.
 
 ## TypeScript
 
 - `"strict": true`. No `any`, no `as` (not even `import { A as B }`: rename instead), no `!`.
   Narrow with a check or a type guard.
-- Data from outside (API, localStorage) is `unknown` until a type guard checks it. The reused
-  files already do this.
-
-## Design
-
-The look is fixed: design tokens at the top of `style.css`, the Bento style (big radius, tinted
-cards, gradient background), the hero, the filters sidebar, the cart drawer that slides in
-from the right, light and dark mode. Changing the
-code must never change the look. Never rewrite `style.css` unless asked.
+- Data from outside (API, localStorage) is `unknown` until a type guard checks it.
+- A value with a fixed set of options is a union, never `string`: `Category`, `CategoryFilter`
+  (a category or `"all"`), `SortOrder`. A string from the API or a `<select>` becomes one only
+  through a guard (`isCategory`, `isCategoryFilter`, `isSortOrder`) in `products.logic.ts`.
+- No magic numbers: a number with a meaning gets a named constant (`MIN_NAME_LENGTH`,
+  `CENTS_PER_DOLLAR`, `REQUEST_TIMEOUT_MS`).
 
 ## Rules from mistakes made while building this project
 
@@ -142,22 +368,24 @@ Each rule comes from a real mistake. The note under it says what happened.
 2. **Run every `npm` command from the project root, and check the result with
    `npm ls <package>` before going on.**
    `npm install` ran in the home folder, so Vite was found in `~/node_modules` and other
-   packages were missing. A later half-finished install left a broken `package-lock.json`
-   (`Cannot read properties of null (reading 'edgesOut')`). If an install fails: delete
-   `node_modules` and `package-lock.json`, then install again.
+   packages were missing. A later half-finished install left a broken `package-lock.json`. If
+   an install fails: delete `node_modules` and `package-lock.json`, then install again.
 
 3. **Never call `setState` directly in an effect body.**
-   The load effect set `"loading"` at its top. oxlint flagged it
-   (`react(set-state-in-effect)`): it starts an extra render. "Try again" sets it now.
+   The old load effect set `"loading"` at its top. oxlint flagged it
+   (`react(set-state-in-effect)`): it starts an extra render.
 
-4. **Copy reused files; never rewrite them.**
-   `cart.state.ts` and `products.api.ts` were first rewritten. The task allows no change except
-   `import type`.
+4. **This repo owns its files; the vanilla repo is a separate project.**
+   Until Day 4 the types, API, logic and cart-state files were copied byte for byte from the
+   vanilla repo. Day 5 ended that: the vanilla `cart.state.ts` kept the cart outside React
+   (see rule 15), and the product page needed `fetchProduct(id)`. Change these files here, and
+   say why in the commit.
 
-5. **Keep the code at the level of the course.**
-   The first version used React Router, Context providers, `useSyncExternalStore`, custom
-   hooks and a test setup. It worked, but it was too hard to read and explain. It was rebuilt
-   with `useState`, `useEffect` and props only.
+5. **Keep the code at the level of the course, and add a tool only when the task needs it.**
+   The first version used React Router, Context, `useSyncExternalStore`, custom hooks and a
+   test setup before the course had covered them. It was too hard to explain, so it was
+   rebuilt with `useState`, `useEffect` and props. Day 5 asked for the router and one store,
+   so they came back one step at a time, each with a reason in this file.
 
 6. **One component per file, and no name clashes.**
    Two files held two components each, and a type shared its name with a component, which
@@ -170,38 +398,131 @@ Each rule comes from a real mistake. The note under it says what happened.
 8. **Never add a package version you haven't checked.**
    Versions in `package.json` were once guessed. Run `npm view <package> version` first.
 
-9. **Simplifying the code never changes the design.**
+9. **Changing the code never changes the design.**
    While simplifying the code, `style.css` was rewritten from scratch and the hero, gradient,
-   card art and sidebar were lost. Only the code was meant to change. Keep the CSS and the
-   class names, and check the page against a screenshot.
+   card art and sidebar were lost. Keep the CSS and the class names, and check the page
+   against a screenshot.
 
 10. **`App.tsx` never holds all the code.**
-    In the vanilla version, `main.ts` grew until it held every part of the app. The first
-    React `App.tsx` did the same: it loaded the products, kept the filters, handled every cart
-    button and the sign-up form. Now each part handles its own work, and `App.tsx` only puts
-    the parts together (see "App.tsx stays small").
+    The first React `App.tsx` loaded the products, kept the filters, handled every cart button
+    and the sign-up form. Now it holds only the routes; each part handles its own work.
+
+11. **A feature's component lives in its module; `src/components/` is only for general ones.**
+    Every component once sat in `src/components/`, so one feature was split over two places.
+
+12. **The server address is written once, in `shared/api/config.ts`.**
+    `getJson` took a full URL and `products.api.ts` hard-coded the host, so every new endpoint
+    would repeat it, and testing `/delay/3000` meant editing code.
+
+13. **A part of the page owns its state; it doesn't do every job.**
+    `ProductsSection` once held the load state, the filters, two effects, the cart clean-up and
+    the choice between five screens in 132 lines. Now `use()` + `LoadBoundary` handle loading
+    and errors, `getProductsView()` picks the screen, and `ProductsContent` draws it.
+
+14. **Fewer files is not the goal; one job per file is.**
+    A plan added `ProductSkeletons`, `CartButton` and three `.ui.ts` files, each a few lines
+    used once. They were left out.
+
+15. **React owns the state. No copy of it outside React.**
+    The first cart Context called the old `cart.state.ts`, which kept the cart in a `let`
+    variable; `addItem(id)` read that variable, not React's state. Two copies: slide 18's
+    "fake counter". Now the cart is only `useState` in `CartProvider`, changed with pure
+    functions from `cart.logic.ts`.
+
+16. **`useCallback` only for a `memo` child.**
+    `removeUnknown` was wrapped in `useCallback` so an effect could depend on it. Slide 38:
+    alone it does nothing. The effect and the function were removed instead. The one
+    `useCallback` today (`handleAction`) exists because `CartRow` is `memo`.
+
+17. **A `memo` chain breaks at its weakest link: measure each step.**
+    With `memo` on `CartRow` alone, all 300 rows still rendered: `onAction` was a new function
+    each render. `useCallback` on it alone changed nothing either: its deps (the cart actions)
+    were new functions on every provider render. Only stable actions made rows skip.
+
+18. **`.env` is in `.gitignore`.**
+    `.gitignore` had only `*.local`, so a `.env` would have been pushed to GitHub.
+
+19. **Copy files first, install packages after, then check `package.json`.**
+    Packages were installed, then a zip was unpacked over the project. Its older
+    `package.json` replaced the new one, and `npm ls` showed `tailwindcss … extraneous`: on
+    disk but not in `package.json`. The shadcn CLI reads `package.json`, so it failed with
+    "Install Tailwind CSS".
+
+20. **Unpacking over a folder never deletes files: check what should be gone.**
+    After the shadcn files were moved, the old copies were still in `components/ui/` and lint
+    failed on them. Check with `git status` or `ls`.
+
+21. **Set `components.json` before `shadcn add`.**
+    `"ui"` still pointed at `@/components/ui`, so the CLI wrote `field.tsx` and the others next
+    to our files, and `CheckoutForm`'s imports found nothing. Moving files by hand also means
+    fixing the imports inside them: an import is an address.
+
+22. **"Installed" is not enough: check the version.**
+    `Can't resolve 'shadcn/tailwind.css'`: `npm ls shadcn` showed `shadcn@1.0.0`, an old,
+    almost empty package. The CLI was a new version. `npm install shadcn@latest` fixed it.
+
+23. **Read the files before deciding.**
+    A package named `cn` in `package.json` looked like a mistaken install. `src/lib/utils.ts`
+    showed the shadcn CLI uses it on purpose. Tools change between versions.
+
+24. **Lint our code, not generated code.**
+    oxlint failed on `==` in the generated `field.tsx`. Editing it would be lost on the next
+    `shadcn add`, so `components/shadcn/` is in `ignorePatterns`.
+
+25. **The pre-commit hook runs every check.**
+    It ran only `lint-staged` (oxlint and Prettier on the staged files): no type check, no
+    build. Now it runs `lint-staged`, `typecheck`, `lint`, `format:check` and `build`.
+
+26. **Commit each step when it works.**
+    The whole Task 4 restructure and Day 5 sat uncommitted for a day, so GitHub showed the old
+    project and the history couldn't show the steps.
+
+27. **Check the API's own docs before writing how to use it.**
+    The docs said to add `/delay/3000` at the end of the base URL, so `…/api/delay/3000`. The
+    API wants the switch before `/api`, and that address answered `{"error":"Not found"}`:
+    the loading test would have shown the error screen instead.
+
+28. **Check the code against every day's slides, not only the last one.**
+    Day 3 said "Category is a union, not a string", but `Product.category` and
+    `Filters.category` were `string`, and two comments still pointed at `#category` and
+    `#sort` "in index.html" from the vanilla version. Now `Category` is a union, the API guard
+    skips a product whose category we don't sell, and the comments name `ProductControls`.
 
 ## Commands
 
 - `npm run dev`: start the dev server
 - `npm run typecheck`: `tsc -b`
-- `npm run lint`: `oxlint --deny-warnings` (a warning fails the run, like an error)
+- `npm run lint`: `oxlint --deny-warnings` (a warning fails the run)
 - `npm run format`: `prettier --write .`
-- `npm run build`: build for production
+- `npm run format:check`: `prettier --check .`
+- `npm run build`: `tsc -b && vite build`
 
-The pre-commit hook runs only `npx lint-staged` (oxlint and Prettier on staged files).
+The pre-commit hook (`.husky/pre-commit`) runs, in this order and fastest first:
+`npx lint-staged`, `npm run typecheck`, `npm run lint`, `npm run format:check`,
+`npm run build`. Any failure stops the commit.
 
 ## Skills
 
 `.claude/skills/` holds two skills from
 [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) (MIT), copied
 unchanged: `vercel-react-best-practices` and `vercel-composition-patterns`. Use them when
-writing or reviewing components, within the "Keep it simple" rule above. Their Next.js and
+writing or reviewing components, within "What the code may use" above. Their Next.js and
 server rules don't apply: this is a client-only Vite app.
 
 ## Before you finish
 
-- Run `npm run typecheck`, `npm run lint` and `npm run build`. All must pass.
+- `npm run typecheck`, `npm run lint`, `npm run format:check` and `npm run build` all pass.
 - Open the app and check the Console: no errors and no React warnings.
+- Try the states: put `/delay/3000`, `/fail/500` or `/empty` **before** `/api` in
+  `VITE_API_BASE_URL` (like `https://shopboard-api.vercel.app/delay/3000/api`), restart
+  `npm run dev`, and check the loading, error and empty screens.
+- Check the structure:
+  - `src/components/` holds only `layout/`, `ui/` and `shadcn/`.
+  - No file in `components/ui/` or `shared/` imports from `modules/` or `components/layout/`.
+  - No `.ts` file in `modules/` imports `react`, except `cart.context.ts`.
+  - `grep -rn "fetch(" src` finds only `shared/api/client.ts`.
+  - `grep -rn "https://" src` finds only `shared/api/config.ts`.
 - Delete files that are no longer used. Keep this file and README.md in sync with the code.
 - Write all code, comments and commit messages in English.
+- Never write or edit `answers.md`: the task asks for those answers in the student's own words,
+  without AI. You may point out a fact in it that doesn't match the code.

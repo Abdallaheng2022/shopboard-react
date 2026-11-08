@@ -1,32 +1,38 @@
 # ShopBoard (React)
 
-A small online shop built with React, TypeScript and Vite. Users can browse products, search,
-filter and sort them, add them to a cart, change quantities and see the total. It is the React
-version of the vanilla TypeScript ShopBoard: the types, API, logic and cart-state files are
-reused unchanged, and React components replace the old DOM code.
+A small online shop built with React, TypeScript and Vite. Users browse products, search,
+filter and sort them, open a product's own page, keep a cart that survives a refresh, and check
+out with a validated form.
 
 ## Features
 
+- Five pages with React Router, a shared layout, and a 404 page
+- Each page's code loads only when the page is opened (`lazy`)
 - Products loaded from the ShopBoard API and checked before use
 - Search by name, filter by category and sort by price
-- One page: a hero, then the products with the filters in a sidebar
-- Cart drawer that slides in from the right: open it with the cart icon; it also opens when a
-  product is added
-- Cart: add items, change quantity, remove items, clear the cart, see the total, and the item
-  count on the cart icon in the header
-- A quantity of zero removes the product, and out-of-stock products can't be added
-- The cart is saved in localStorage, so it survives a page refresh
-- A message for each state: loading (with placeholder cards), error with a "Try again" button,
-  empty store, and no search results; a failed load tries again when the connection returns
-- A warning when the cart can't be saved on this device
-- Sign-up form over the page, checked by the browser (required fields, email, 8+ characters)
+- A product page that loads one product from the API by its id; an unknown id shows "We
+  couldn't find this product"
+- One cart on every page, saved in localStorage, so it survives a refresh
+- Cart page: change quantities, remove a line, clear the cart, see the total; the cart icon in
+  the header shows the item count and links to the cart
+- Out-of-stock products can't be added, and a quantity below one removes the line
+- Checkout form (name, email, address) checked by one Zod schema, with a message under each
+  field; an empty cart can't check out; placing the order empties the cart and opens a
+  thank-you page
+- Loading with Suspense, errors with an Error Boundary and "Try again"; a slow or broken part
+  doesn't block the rest of the page; a failed load tries again when the connection returns
+- Empty store and "no match" messages
+- Sign-up dialog from the header, checked by the browser
 - Mobile-first layout, light and dark mode
 
 ## Tech stack
 
 - [Vite](https://vite.dev/), [React 19](https://react.dev/), TypeScript with `"strict": true`
-- React only with `useState`, `useEffect` and props: no router and no state library
-- One CSS file with CSS custom properties
+- [React Router](https://reactrouter.com/) and
+  [react-error-boundary](https://github.com/bvaughn/react-error-boundary)
+- [react-hook-form](https://react-hook-form.com/), [Zod](https://zod.dev/) and
+  [shadcn/ui](https://ui.shadcn.com/) for the checkout form
+- One CSS file for the design (`src/style.css`); Tailwind CSS only for the shadcn components
 - oxlint, Prettier, husky and lint-staged
 
 ## Getting started
@@ -35,6 +41,20 @@ reused unchanged, and React components replace the old DOM code.
 npm install
 npm run dev
 ```
+
+### The API address
+
+The app talks to `https://shopboard-api.vercel.app/api` by default. To use another address,
+copy `.env.example` to `.env` and change `VITE_API_BASE_URL`, then restart `npm run dev`.
+
+To try the loading, error and empty states, put `/delay/3000`, `/fail/500` or `/empty`
+**before** `/api` in `.env`. After the `/api` the server answers 404.
+
+| State   | `VITE_API_BASE_URL`                               |
+| ------- | ------------------------------------------------- |
+| Loading | `https://shopboard-api.vercel.app/delay/3000/api` |
+| Error   | `https://shopboard-api.vercel.app/fail/500/api`   |
+| Empty   | `https://shopboard-api.vercel.app/empty/api`      |
 
 ## Scripts
 
@@ -47,100 +67,153 @@ npm run dev
 | `npm run format`       | Format all files with Prettier            |
 | `npm run format:check` | Check formatting without changing files   |
 
+## Routes
+
+| URL                 | Page               | What it shows                                  |
+| ------------------- | ------------------ | ---------------------------------------------- |
+| `/`                 | `HomePage`         | The hero, then the products with their filters |
+| `/products/:id`     | `ProductPage`      | One product, loaded from the API by its id     |
+| `/cart`             | `CartPage`         | The cart lines, the total, Clear and Checkout  |
+| `/checkout`         | `CheckoutPage`     | The form, or "Your cart is empty"              |
+| `/checkout/success` | `OrderSuccessPage` | The thank-you after an order                   |
+| anything else       | `NotFoundPage`     | "Page not found" and a link back to the shop   |
+
 ## Project structure
+
+One folder per feature in `src/modules/`. `src/components/` holds only what no feature owns.
 
 ```
 src/
-├── main.tsx                     # Mounts <App />
-├── App.tsx                      # Puts the page together; holds only the shared state
-├── style.css                    # All styles
-├── components/                  # One React component per file
-│   ├── Header.tsx               # Logo, nav, cart button; owns sign-up
-│   ├── RegisterForm.tsx
-│   ├── Hero.tsx
-│   ├── ProductsSection.tsx      # Loads the products; owns the states and the filters
-│   ├── ProductControls.tsx
-│   ├── StatusMessage.tsx
-│   ├── ProductList.tsx
-│   ├── ProductCard.tsx
-│   ├── CartDrawer.tsx           # The cart drawer; handles every cart change
-│   ├── CartRow.tsx
-│   └── Footer.tsx
-├── modules/                     # Reused from the vanilla version, unchanged
-│   ├── products/
-│   │   ├── products.types.ts    # Product, SortOrder, Filters
-│   │   ├── products.api.ts      # fetchProducts(): GET, type guard, API → Product
-│   │   └── products.logic.ts    # Search, category filter, price sort, find by id
-│   └── cart/
-│       ├── cart.types.ts        # CartItem, Cart, CartAction
-│       ├── cart.state.ts        # The cart, saved in localStorage
-│       └── cart.logic.ts        # Item count and total
-└── shared/                      # Reused from the vanilla version, unchanged
-    ├── api/client.ts            # getJson(): the only fetch, with a timeout
-    ├── api/errors.ts            # ApiError and the message the user sees
-    └── ui/format.ts             # formatPrice
+├── main.tsx                 # StrictMode → BrowserRouter → CartProvider → App
+├── App.tsx                  # The routes; every page is lazy()
+├── style.css                # The design
+├── shadcn.css               # Tailwind theme + utilities for the shadcn components
+├── vite-env.d.ts
+├── components/
+│   ├── layout/              # RootLayout, Header, Footer, NotFoundPage
+│   ├── ui/                  # LoadBoundary, LoadError, Overlay, StatusMessage
+│   └── shadcn/              # field, input, label, separator (generated by shadcn)
+├── lib/utils.ts             # generated by shadcn
+├── modules/
+│   ├── products/            # types, api, logic, cache, state · components · pages
+│   ├── cart/                # types, logic, storage, context · components · pages
+│   ├── checkout/            # schema · components · pages
+│   └── auth/                # the sign-up form
+└── shared/
+    ├── api/                 # config (base URL), client (the only fetch), errors
+    └── ui/format.ts         # formatPrice
 ```
 
-The files in `src/modules/` and `src/shared/` are copied from the vanilla version and never
-edited here.
+The full tree, with what each file holds, is in [CLAUDE.md](CLAUDE.md).
 
 ## Component tree
 
-Every component, as React renders it. Props are in `( )`; `state:` is what the component owns.
+Our components as React renders them (React Router's and react-error-boundary's own inner
+components are left out). Props are in `( )`; `state:` is what the component owns; `reads:` is
+a context or a promise it reads. Check it against React DevTools' Components tab.
 
 ```
-App                                              state: products, cart, showCart
-├── Header (itemCount, onOpenCart)               state: showRegister, welcomeName
-│   └── RegisterForm (onRegister, onClose)       only while open · state: name, email, password, agreed
+StrictMode
+└── BrowserRouter
+    └── CartProvider                                 state: cart · useMemo: actions · effect: save
+        └── App
+            └── Routes
+                └── RootLayout
+                    ├── Header                       state: showRegister, welcomeName · reads: cart
+                    │   └── RegisterForm (onRegister, onClose)    only while open
+                    │       │                        state: name, email, password, agreed
+                    │       └── Overlay (className, onClose)
+                    ├── Suspense                     fallback: "Loading page…"
+                    │   └── one page (below)
+                    └── Footer
+```
+
+The pages:
+
+```
+HomePage
 ├── Hero
-├── ProductsSection (products, onLoaded, onCartChange, onAdd)
-│   │                                            state: status, errorMessage, attempt, filters
-│   ├── ProductControls (filters, categories, disabled, onChange)
-│   ├── StatusMessage (message, onRetry?)        one of: loading, error, empty store, no match
-│   └── ProductList (products, onAdd)            when there are products to show
-│       └── ProductCard (product, onAdd)         one per product, key = product.id
-├── Footer
-└── CartDrawer (cart, products, onCartChange, onClose)   only while open
-    └── CartRow (item, product, onAction)        one per cart line, key = item.productId
+└── LoadBoundary (fallback: ProductsSkeleton, onReset: resetProducts)
+    └── ProductsSection                              state: filters · reads: products · useMemo: categories
+        ├── ProductControls (filters, categories, disabled, onChange)
+        └── ProductsContent (view, products)
+            ├── StatusMessage (message)              empty store or no match
+            └── ProductCard (product)                memo · one per product, key = product.id · reads: cart actions
+
+ProductPage                                          reads: the :id in the URL
+└── LoadBoundary (fallback, onReset: resetProduct, resetKeys: [id])
+    └── ProductDetails (id)                          reads: the product, cart actions
+
+CartPage
+└── LoadBoundary (fallback, onReset: resetProducts)
+    └── CartContent                                  reads: products, cart, cart actions · useCallback: handleAction
+        └── CartRow (item, product, onAction)        memo · one per line, key = item.productId
+
+CheckoutPage                                         reads: cart, cart actions
+└── CheckoutForm (onPlaceOrder)                      useForm: the values, errors, submitting
+    └── Controller × 3                               key = the field name
+        └── Field, FieldLabel, Input, FieldError     (shadcn)
+
+OrderSuccessPage                                     reads: the name in the navigation state
+
+NotFoundPage
 ```
 
-`StatusMessage` and `ProductList` don't show at the same time: `ProductsSection` shows a
-message, or the list. While loading, it also shows six placeholder cards (plain `<div>`s, keys
-`skeleton-1` to `skeleton-6`). The welcome message after sign-up is plain markup in `Header`.
+`LoadBoundary` is an `ErrorBoundary` (its fallback is `LoadError`, with "Try again") around a
+`Suspense`.
 
 ### Who owns each piece of state
 
-`App` holds only what more than one part needs. Each part owns the rest itself.
+| State                                 | Owner                       | What it holds                            | Changed by                                                 |
+| ------------------------------------- | --------------------------- | ---------------------------------------- | ---------------------------------------------------------- |
+| `cart`                                | `CartProvider`              | The cart lines `{ productId, quantity }` | `useCartActions()`: add, increase, decrease, remove, clear |
+| `filters`                             | `ProductsSection`           | The search text, category and sort       | `ProductControls` through `onChange`                       |
+| `showRegister`                        | `Header`                    | True while the sign-up form is open      | "Sign up", ×, a click outside, submitting                  |
+| `welcomeName`                         | `Header`                    | The name of the user who just signed up  | submitting the sign-up form                                |
+| `name`, `email`, `password`, `agreed` | `RegisterForm`              | The sign-up fields                       | typing in the form                                         |
+| the checkout fields                   | `useForm` in `CheckoutForm` | name, email, address, their errors       | typing; react-hook-form keeps them                         |
 
-| State                                 | Owner             | What it holds                                   | Changed by                                       |
-| ------------------------------------- | ----------------- | ----------------------------------------------- | ------------------------------------------------ |
-| `products`                            | `App`             | Every product from the API                      | `ProductsSection` through `onLoaded`             |
-| `cart`                                | `App`             | The cart lines, as returned by `cart.state.ts`  | "Add to cart"; the drawer through `onCartChange` |
-| `showCart`                            | `App`             | True while the cart drawer is open              | the cart icon, "Add to cart", ×, a click outside |
-| `status`                              | `ProductsSection` | `"loading"`, `"error"` or `"loaded"`            | the load; "Try again"; the connection returning  |
-| `errorMessage`                        | `ProductsSection` | The message shown when the load fails           | the load                                         |
-| `attempt`                             | `ProductsSection` | A counter; changing it loads the products again | "Try again", or the connection coming back       |
-| `filters`                             | `ProductsSection` | The search text, category and sort              | `ProductControls` through `onChange`             |
-| `showRegister`                        | `Header`          | True while the sign-up form is open             | "Sign up", ×, a click outside, submitting        |
-| `welcomeName`                         | `Header`          | The name of the user who just signed up         | submitting the form                              |
-| `name`, `email`, `password`, `agreed` | `RegisterForm`    | The sign-up fields                              | typing in the form                               |
+Not state, computed on every render: the products that match the filters, the category list,
+the item count, the total. The products come from `products.cache.ts` through `use()`.
 
-Computed on every render, not stored: the products that match the filters, the category list,
-the item count, the total, and whether the last cart change failed to save (read from
-`cart.state.ts`).
+### The two effects
 
-### Checking it in React DevTools
+| Effect                           | Where          | Why it is an effect                        |
+| -------------------------------- | -------------- | ------------------------------------------ |
+| save the cart (`[cart]`)         | `CartProvider` | localStorage is outside React              |
+| listen to `online`, with cleanup | `LoadError`    | a browser event; a failed load tries again |
 
-Open the **Components** tab. It shows the same tree, plus `StrictMode` above `App`. Select a
-component to see its props, and its state under **hooks**: `App` has 3 `State` hooks,
-`Header` 2, `RegisterForm` 4, and `ProductsSection` 4 `State` hooks and 2 `Effect`s (load the
-products, reload when back online).
+## Performance
+
+A problem was created, measured, then solved: 5,000 products and a 300-line cart. During
+development a temporary fake API (not in this repo; the app always uses the real API and its
+12 products) served the 5,000 products to the production build; each action ran 7 times in
+Chrome; the numbers are medians.
+
+| Action                             | Before                     | After    |
+| ---------------------------------- | -------------------------- | -------- |
+| type one letter in search          | 140 ms, 5,000 card renders | 35 ms, 0 |
+| "Add to cart" on one product       | 119 ms, 5,000 card renders | 24 ms, 0 |
+| `+` on one line of a 300-line cart | 13 ms, 300 row renders     | 14 ms, 1 |
+
+How: `memo` on `ProductCard` and `CartRow`; the cart split into two contexts (the lines, and
+actions that never change); `useCallback` on `CartContent`'s `handleAction`; `useMemo` on the
+category list. Each one's reason is in [CLAUDE.md](CLAUDE.md) under "Performance".
 
 ## Code quality
 
 - TypeScript runs in strict mode. The code uses no `any`, no `as` and no `!`.
-- A husky pre-commit hook runs lint-staged: oxlint and Prettier on the staged files. A lint
-  warning blocks the commit.
+- A husky pre-commit hook runs `lint-staged` (oxlint and Prettier on the staged files), then
+  `typecheck`, `lint`, `format:check` and `build`. Any failure stops the commit.
+- The files in `src/components/shadcn/` are generated by the shadcn CLI and are not linted.
 
-The rules for working on this project are in [CLAUDE.md](CLAUDE.md). Two Claude Code skills
-from Vercel (React best practices and composition patterns) are in `.claude/skills/`.
+## Other files
+
+- `answers.md`: my answers to the Day 5 questions (where the cart lives, one effect I kept,
+  what re-renders on "Add to cart"), in my own words.
+- `debug-lab-log.md`: the Debug Lab task from Day 4. Five planted bugs in a test shop, each
+  found with the Console and React DevTools, with its cause and fix.
+
+The rules for working on this project, and the mistakes they come from, are in
+[CLAUDE.md](CLAUDE.md). Two Claude Code skills from Vercel (React best practices and
+composition patterns) are in `.claude/skills/`.
