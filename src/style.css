@@ -845,6 +845,67 @@ select {
   justify-self: start;
 }
 
+/* Checkout page: the form, then the order summary. Side by side on wide screens. */
+.checkout-layout {
+  display: grid;
+  gap: calc(var(--space) * 2);
+  align-items: start;
+}
+
+@media (min-width: 960px) {
+  .checkout-layout {
+    grid-template-columns: minmax(0, 480px) minmax(0, 360px);
+    justify-content: space-between;
+  }
+}
+
+/* Order summary: what the user is paying for, next to the form. */
+.order-summary {
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.order-summary-title {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.order-summary-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.order-summary-line,
+.order-summary-total {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space);
+}
+
+.order-summary-price {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.order-summary-total {
+  margin: 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 1.125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.order-summary .btn {
+  justify-self: start;
+}
+
 /* A field with an error gets a red border, so the error is seen, not only read. */
 input[aria-invalid="true"] {
   border-color: var(--danger);

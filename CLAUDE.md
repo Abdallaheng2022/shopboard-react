@@ -83,7 +83,9 @@ src/
 │   │   └── pages/CartPage.tsx    # "/cart"
 │   ├── checkout/
 │   │   ├── checkout.schema.ts    # Every form rule, in one Zod schema
-│   │   ├── components/CheckoutForm.tsx
+│   │   ├── components/
+│   │   │   ├── CheckoutForm.tsx
+│   │   │   └── OrderSummary.tsx  # lines, item count, total, "Edit cart"
 │   │   └── pages/
 │   │       ├── CheckoutPage.tsx      # "/checkout"
 │   │       └── OrderSuccessPage.tsx  # "/checkout/success"
@@ -316,6 +318,10 @@ two:
   no red while typing the first letter; focus jumps to the first error; the button is
   disabled while sending (`isSubmitting`); an error never clears what the user typed.
 - Use shadcn's `Field` components. `<FormField>` is the older way (slide 50); don't add it.
+- The order summary sits next to the form: each line, the item count and the total, all
+  computed from the cart and the cached products, and a link back to `/cart`. Only
+  `OrderSummary` needs the products, so only it is inside a `LoadBoundary`: if the products
+  are slow or fail, the form keeps working.
 - An empty cart can't check out. Placing the order calls `clear()`, then
   `navigate("/checkout/success", { replace: true, state: { name } })`. `replace`: "Back" from
   the thank-you skips the checkout page.

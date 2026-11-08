@@ -16,7 +16,8 @@ out with a validated form.
 - Cart page: change quantities, remove a line, clear the cart, see the total; the cart icon in
   the header shows the item count and links to the cart
 - Out-of-stock products can't be added, and a quantity below one removes the line
-- Checkout form (name, email, address) checked by one Zod schema, with a message under each
+- Checkout form (name, email, address) next to a summary of the order (each line, the item
+  count, the total, and "Edit cart"), checked by one Zod schema, with a message under each
   field; an empty cart can't check out; placing the order empties the cart and opens a
   thank-you page
 - Loading with Suspense, errors with an Error Boundary and "Try again"; a slow or broken part
@@ -69,14 +70,14 @@ To try the loading, error and empty states, put `/delay/3000`, `/fail/500` or `/
 
 ## Routes
 
-| URL                 | Page               | What it shows                                  |
-| ------------------- | ------------------ | ---------------------------------------------- |
-| `/`                 | `HomePage`         | The hero, then the products with their filters |
-| `/products/:id`     | `ProductPage`      | One product, loaded from the API by its id     |
-| `/cart`             | `CartPage`         | The cart lines, the total, Clear and Checkout  |
-| `/checkout`         | `CheckoutPage`     | The form, or "Your cart is empty"              |
-| `/checkout/success` | `OrderSuccessPage` | The thank-you after an order                   |
-| anything else       | `NotFoundPage`     | "Page not found" and a link back to the shop   |
+| URL                 | Page               | What it shows                                           |
+| ------------------- | ------------------ | ------------------------------------------------------- |
+| `/`                 | `HomePage`         | The hero, then the products with their filters          |
+| `/products/:id`     | `ProductPage`      | One product, loaded from the API by its id              |
+| `/cart`             | `CartPage`         | The cart lines, the total, Clear and Checkout           |
+| `/checkout`         | `CheckoutPage`     | The form and the order summary, or "Your cart is empty" |
+| `/checkout/success` | `OrderSuccessPage` | The thank-you after an order                            |
+| anything else       | `NotFoundPage`     | "Page not found" and a link back to the shop            |
 
 ## Project structure
 
@@ -150,9 +151,11 @@ CartPage
         └── CartRow (item, product, onAction)        memo · one per line, key = item.productId
 
 CheckoutPage                                         reads: cart, cart actions
-└── CheckoutForm (onPlaceOrder)                      useForm: the values, errors, submitting
-    └── Controller × 3                               key = the field name
-        └── Field, FieldLabel, Input, FieldError     (shadcn)
+├── CheckoutForm (onPlaceOrder)                      useForm: the values, errors, submitting
+│   └── Controller × 3                               key = the field name
+│       └── Field, FieldLabel, Input, FieldError     (shadcn)
+└── LoadBoundary (fallback, onReset: resetProducts)
+    └── OrderSummary                                 reads: products, cart · lines, item count, total
 
 OrderSuccessPage                                     reads: the name in the navigation state
 
